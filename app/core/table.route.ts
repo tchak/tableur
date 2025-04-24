@@ -1,0 +1,62 @@
+import { vValidator as validator } from '@hono/valibot-validator';
+import { Hono } from 'hono';
+
+import { parseServerError } from './error.types';
+import { OrganizationParams } from './organization.types';
+import { tableClone, tableCreate, tableDelete, tableGet, tableList, tableUpdate } from './table.db';
+import { TableCreateInput, TableParams, TableUpdateInput } from './table.types';
+
+const tables = new Hono();
+const table = new Hono();
+
+tables.get('/', validator('param', OrganizationParams), async (c) => {
+  const params = c.req.valid('param');
+  const data = await tableList(params);
+  return c.json({ data, meta: { total: data.length } });
+});
+tables.post(
+  '/',
+  validator('param', OrganizationParams),
+  validator('json', TableCreateInput),
+  async (c) => {
+    const params = c.req.valid('param');
+    const input = c.req.valid('json');
+    const data = await tableCreate(params, input);
+    c.header('Location', `/api/v1/organizations/${params.organizationId}/tables/${data.id}`);
+    return c.json({ data }, { status: 201 });
+  },
+);
+
+table.get('/', validator('param', TableParams), async (c) => {
+  const params = c.req.valid('param');
+  try {
+    const data = await tableGet(params);
+    return c.json({ data });
+  } catch (error) {
+    const { message, status } = parseServerError(error);
+    return c.json({ error: message }, { status });
+  }
+});
+table.patch(
+  '/',
+  validator('json', TableUpdateInput),
+  validator('param', TableParams),
+  async (c) => {
+    const params = c.req.valid('param');
+    const input = c.req.valid('json');
+    const data = await tableUpdate(params, input);
+    return c.json({ data });
+  },
+);
+table.delete('/', validator('param', TableParams), async (c) => {
+  const params = c.req.valid('param');
+  const data = await tableDelete(params);
+  return c.json({ data });
+});
+table.post('/clone', validator('param', TableParams), async (c) => {
+  const params = c.req.valid('param');
+  const data = await tableClone(params);
+  return c.json({ data });
+});
+
+export { table, tables };

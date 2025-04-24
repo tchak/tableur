@@ -1,0 +1,107 @@
+import { beforeEach, describe, expect, it } from 'bun:test';
+import * as v from 'valibot';
+
+import { app } from '../server/app';
+import { prisma } from '../services/db';
+import { ColumnOutput } from './column.types';
+import { organizationCreate } from './organization.db';
+import { RowOutput } from './row.types';
+import { SubmissionOutput } from './submission.types';
+import { tableCreate } from './table.db';
+import { TableOutput } from './table.types';
+
+const RowListOutput = v.object({
+  data: v.array(RowOutput),
+  meta: v.object({ total: v.number() }),
+});
+const RowCreateOutput = v.object({ data: RowOutput });
+const RowGetOutput = v.object({
+  data: v.object({
+    ...RowOutput.entries,
+    table: v.object({ ...TableOutput.entries, columns: v.array(ColumnOutput) }),
+    submission: v.nullable(SubmissionOutput),
+  }),
+});
+
+describe('api/v1/tables/:id/rows', () => {
+  let organizationId: string;
+  let tableId: string;
+  let columnId: string;
+  let rowId: string;
+  beforeEach(async () => {
+    await prisma.organization.deleteMany();
+    const organization = await organizationCreate({ name: 'Test Organization' });
+    organizationId = organization.id;
+    const table = await tableCreate(
+      { organizationId },
+      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }], rows: [{}] },
+    );
+    tableId = table.id;
+    rowId = (await prisma.row.findFirstOrThrow()).id;
+    columnId = (await prisma.column.findFirstOrThrow()).id;
+  });
+
+  it('should return a list of rows', async () => {
+    const response = await app.request(`/api/v1/tables/${tableId}/rows`);
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    const { data: rows } = v.parse(RowListOutput, data);
+    expect(rows.length).toBe(1);
+  });
+
+  it('should return a row', async () => {
+    const response = await app.request(`/api/v1/tables/${tableId}/rows/${rowId}`);
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    const { data: row } = v.parse(RowGetOutput, data);
+    expect(row.id).toEqual(rowId);
+    expect(row.table.id).toEqual(tableId);
+    expect(row.table.columns.length).toBe(1);
+    const column = row.table.columns.at(0);
+    expect(column?.name).toEqual('Test Column');
+    expect(column?.type).toEqual('text');
+  });
+
+  it('should create a row', async () => {
+    const response = await app.request(`/api/v1/tables/${tableId}/rows`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        data: {
+          [columnId]: {
+            type: 'text',
+            value: 'test value',
+          },
+        },
+      }),
+    });
+    expect(response.status).toBe(201);
+    const data = await response.json();
+    const { data: row } = v.parse(RowCreateOutput, data);
+    expect(row.number).toEqual(2);
+    const typedValue = row.data[columnId];
+    expect(typedValue?.type).toEqual('text');
+    expect(typedValue?.value).toEqual('test value');
+
+    {
+      const response = await app.request(`/api/v1/tables/${tableId}/rows`);
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      const { data: rows } = v.parse(RowListOutput, data);
+      expect(rows.length).toBe(2);
+      expect(rows.map(({ number }) => number)).toStrictEqual([1, 2]);
+    }
+  });
+
+  it('should delete a row', async () => {
+    const response = await app.request(`/api/v1/tables/${tableId}/rows/${rowId}`, {
+      method: 'DELETE',
+    });
+    expect(response.status).toBe(200);
+
+    {
+      const response = await app.request(`/api/v1/tables/${tableId}/rows/${rowId}`);
+      expect(response.status).toBe(404);
+    }
+  });
+});
