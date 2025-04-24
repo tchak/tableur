@@ -1,5 +1,6 @@
-import { vValidator as validator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
+import { describeRoute } from 'hono-openapi';
+import { resolver, validator } from 'hono-openapi/valibot';
 
 import { parseServerError } from './error.types';
 import {
@@ -11,6 +12,7 @@ import {
 } from './organization.db';
 import {
   OrganizationCreateInput,
+  OrganizationListJSON,
   OrganizationParams,
   OrganizationUpdateInput,
 } from './organization.types';
@@ -18,10 +20,25 @@ import {
 const organizations = new Hono();
 const organization = new Hono();
 
-organizations.get('/', async (c) => {
-  const data = await organizationList();
-  return c.json({ data, meta: { total: data.length } });
-});
+organizations.get(
+  '/',
+  describeRoute({
+    description: 'List organizations',
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: resolver(OrganizationListJSON),
+          },
+        },
+      },
+    },
+  }),
+  async (c) => {
+    const data = await organizationList();
+    return c.json({ data, meta: { total: data.length } });
+  },
+);
 organizations.post('/', validator('json', OrganizationCreateInput), async (c) => {
   const input = c.req.valid('json');
   const data = await organizationCreate(input);

@@ -60,3 +60,16 @@ export const FormGetOutput = v.object({
   pages: v.array(PageOutput),
 });
 export type FormGetInput = v.InferInput<typeof FormGetOutput>;
+
+export const FormJSON = v.object({
+  id: ID,
+  name: v.string(),
+  description: v.nullable(v.string()),
+  createdAt: v.pipe(v.string(), v.isoDateTime()),
+  updatedAt: v.pipe(v.string(), v.isoDateTime()),
+});
+
+export const FormListJSON = v.object({
+  data: v.array(FormJSON),
+  meta: v.object({ total: v.pipe(v.number(), v.integer()) }),
+});

@@ -22,5 +22,17 @@ export const OrganizationOutput = v.object({
 });
 export type OrganizationInput = v.InferInput<typeof OrganizationOutput>;
 
+export const OrganizationJSON = v.object({
+  id: ID,
+  name: v.string(),
+  createdAt: v.pipe(v.string(), v.isoDateTime()),
+  updatedAt: v.pipe(v.string(), v.isoDateTime()),
+});
+
+export const OrganizationListJSON = v.object({
+  data: v.array(OrganizationJSON),
+  meta: v.object({ total: v.pipe(v.number(), v.integer()) }),
+});
+
 export const OrganizationParams = v.object({ organizationId: ID });
 export type OrganizationParams = v.InferOutput<typeof OrganizationParams>;

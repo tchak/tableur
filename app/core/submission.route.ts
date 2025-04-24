@@ -1,5 +1,5 @@
-import { vValidator as validator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
+import { validator } from 'hono-openapi/valibot';
 
 import {
   submissionDelete,
