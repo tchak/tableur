@@ -62,3 +62,7 @@ db-migrate:
 [group('storage'), group('dev')]
 storage-reset:
   rm -r ./storage/*
+
+[group('dev')]
+loc:
+  tokei -e app/generated app
