@@ -141,3 +141,6 @@ app/generated
 
 # Fly Storage
 storage
+
+# OpenAPI
+openapi.json
