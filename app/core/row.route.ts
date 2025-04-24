@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 
 import { parseServerError } from './error.types';
 import { rowCreate, rowDelete, rowGet, rowList, rowUpdate } from './row.db';
-import { RowCreateInput, RowParams } from './row.types';
+import { RowCreateInput, RowParams, RowUpdateInput } from './row.types';
 import { TableParams } from './table.types';
 
 const rows = new Hono();
@@ -32,9 +32,10 @@ row.get('/', validator('param', RowParams), async (c) => {
     return c.json({ error: message }, { status });
   }
 });
-row.patch('/', validator('param', RowParams), async (c) => {
+row.patch('/', validator('param', RowParams), validator('json', RowUpdateInput), async (c) => {
   const params = c.req.valid('param');
-  const data = await rowUpdate(params);
+  const input = c.req.valid('json');
+  const data = await rowUpdate(params, input);
   return c.json({ data });
 });
 row.delete('/', validator('param', RowParams), async (c) => {

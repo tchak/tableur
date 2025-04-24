@@ -9,6 +9,9 @@ export const Timestamp = v.union([
     v.transform((value) => value.toISOString()),
   ),
 ]);
+export const ISODate = v.pipe(v.string(), v.isoDate());
+export const ISODateTime = v.pipe(v.string(), v.isoDateTime());
+const Int = v.pipe(v.number(), v.integer());
 
 export const Name = v.pipe(v.string(), v.minLength(1), v.maxLength(400));
 export const Description = v.pipe(v.string(), v.maxLength(1000));
@@ -27,12 +30,58 @@ export const DeletedOutput = v.object({
 });
 export type DeletedInput = v.InferInput<typeof DeletedOutput>;
 
+export const FileValue = v.object({
+  url: v.pipe(v.string(), v.url()),
+  filename: v.string(),
+  size: v.pipe(v.number(), v.integer()),
+  mimeType: v.string(),
+  checksum: v.string(),
+});
+
+export const TextType = v.literal('text');
+export const NumberType = v.literal('number');
+export const BooleanType = v.literal('boolean');
+export const DateType = v.literal('date');
+export const DateTimeType = v.literal('datetime');
+export const FileType = v.literal('file');
+export const ChoiceType = v.literal('choice');
+export const ChoiceListType = v.literal('choiceList');
+
 export const TypedValue = v.variant('type', [
-  v.object({ type: v.literal('text'), value: v.string() }),
-  v.object({ type: v.literal('number'), value: v.number() }),
-  v.object({ type: v.literal('boolean'), value: v.boolean() }),
-  v.object({ type: v.literal('datetime'), value: ISOTimestamp }),
+  v.object({ type: TextType, value: v.string() }),
+  v.object({ type: NumberType, value: Int }),
+  v.object({ type: BooleanType, value: v.boolean() }),
+  v.object({ type: ChoiceType, value: ID }),
+  v.object({ type: ChoiceListType, value: v.array(ID) }),
+  v.object({ type: DateType, value: ISODate }),
+  v.object({ type: DateTimeType, value: ISODateTime }),
+  v.object({ type: FileType, value: v.array(FileValue) }),
+]);
+
+export const NewValue = v.variant('type', [
+  v.object({ type: TextType, value: v.string() }),
+  v.object({ type: NumberType, value: Int }),
+  v.object({ type: BooleanType, value: v.boolean() }),
+  v.object({ type: ChoiceType, value: ID }),
+  v.object({ type: ChoiceListType, value: v.array(ID) }),
+  v.object({ type: DateType, value: ISODate }),
+  v.object({ type: DateTimeType, value: ISODateTime }),
+  v.object({ type: FileType, value: v.array(v.string()) }),
+]);
+
+export const UpdateValue = v.variant('type', [
+  v.object({ type: TextType, value: v.nullable(v.string()) }),
+  v.object({ type: NumberType, value: v.nullable(Int) }),
+  v.object({ type: BooleanType, value: v.boolean() }),
+  v.object({ type: ChoiceType, value: v.nullable(ID) }),
+  v.object({ type: ChoiceListType, value: v.object({ add: v.array(ID), remove: v.array(ID) }) }),
+  v.object({ type: DateType, value: v.nullable(ISODate) }),
+  v.object({ type: DateTimeType, value: v.nullable(ISODateTime) }),
+  v.object({ type: FileType, value: v.array(v.string()) }),
 ]);
 
 export const Data = v.record(ID, TypedValue);
 export type Data = v.InferOutput<typeof Data>;
+
+export const NewData = v.record(ID, NewValue);
+export const UpdateData = v.record(ID, UpdateValue);

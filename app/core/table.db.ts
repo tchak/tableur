@@ -48,6 +48,13 @@ export async function tableGet({ tableId }: TableParams) {
           type: true,
           createdAt: true,
           updatedAt: true,
+          options: {
+            orderBy: { position: 'asc' },
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
     },

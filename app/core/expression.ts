@@ -84,8 +84,8 @@ export function compute(expression: Expression, data: Data): boolean {
 }
 
 function compareDateTime(
-  left: Temporal.PlainDateTime,
-  right: Temporal.PlainDateTime,
+  left: Temporal.PlainDateTime | Temporal.PlainDate,
+  right: Temporal.PlainDateTime | Temporal.PlainDate,
 ): 'lt' | 'gt' | 'eq' {
   switch (Temporal.PlainDateTime.compare(left, right)) {
     case -1:

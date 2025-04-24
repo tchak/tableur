@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { prisma } from '../services/db';
 
-import type { RowCreateInput, RowGetInput, RowInput, RowParams } from './row.types';
+import type { RowCreateInput, RowGetInput, RowInput, RowParams, RowUpdateInput } from './row.types';
 import { RowGetOutput, RowOutput } from './row.types';
 import type { TableParams } from './table.types';
 import { DeletedOutput, type DeletedInput } from './types';
@@ -82,6 +82,13 @@ export async function rowGet({ tableId, rowId }: RowParams) {
               type: true,
               createdAt: true,
               updatedAt: true,
+              options: {
+                orderBy: { position: 'asc' },
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -131,7 +138,7 @@ export async function rowDelete({ tableId, rowId }: RowParams) {
   return v.parse(DeletedOutput, row);
 }
 
-export async function rowUpdate({ tableId, rowId }: RowParams) {
+export async function rowUpdate({ tableId, rowId }: RowParams, input: RowUpdateInput) {
   const row = await prisma.row.update({
     where: {
       id: rowId,
@@ -142,7 +149,7 @@ export async function rowUpdate({ tableId, rowId }: RowParams) {
         organization: { deletedAt: null },
       },
     },
-    data: {},
+    data: input.data,
     select: {
       id: true,
       number: true,

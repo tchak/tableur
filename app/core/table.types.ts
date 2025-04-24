@@ -1,13 +1,13 @@
 import * as v from 'valibot';
 
 import { ColumnCreateInput, ColumnJSON, ColumnOutput } from './column.types';
-import { Data, Description, ID, ISOTimestamp, Name, Timestamp } from './types';
+import { Description, ID, ISOTimestamp, Name, NewData, Timestamp } from './types';
 
 export const TableCreateInput = v.object({
   name: Name,
   description: v.optional(Description),
   columns: v.optional(v.pipe(v.array(ColumnCreateInput), v.maxLength(1000))),
-  rows: v.optional(v.pipe(v.array(Data), v.maxLength(1000))),
+  rows: v.optional(v.pipe(v.array(NewData), v.maxLength(1000))),
 });
 export type TableCreateInput = v.InferInput<typeof TableCreateInput>;
 
