@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import { prisma } from '../services/db';
 
+import { FormPathOutput, type FormPathInput } from './form.types';
 import type {
   OrganizationCreateInput,
   OrganizationInput,
@@ -72,19 +73,17 @@ export async function organizationList() {
   return v.parse(v.array(OrganizationOutput), organizations);
 }
 
-export function organizationPathList({
-  organizationId,
-}: OrganizationParams): Promise<{ id: string; path: string }[]> {
-  return prisma.formPath.findMany({
+export async function organizationPathList({ organizationId }: OrganizationParams) {
+  const paths: FormPathInput[] = await prisma.formPath.findMany({
     where: { organization: { id: organizationId, deletedAt: null } },
     take: 100,
     select: {
-      id: true,
       path: true,
       form: {
-        select: { tableId: true, id: true, name: true },
-        where: { OR: [{ deletedAt: null }, { table: { deletedAt: null } }] },
+        select: { id: true, name: true, description: true },
+        where: { AND: [{ deletedAt: null }, { table: { deletedAt: null } }] },
       },
     },
   });
+  return v.parse(v.array(FormPathOutput), paths);
 }

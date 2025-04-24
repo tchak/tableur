@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { ID, Name, Timestamp } from './types';
+import { ID, ISOTimestamp, Name, Timestamp } from './types';
 
 export const OrganizationCreateInput = v.object({
   name: Name,
@@ -25,8 +25,8 @@ export type OrganizationInput = v.InferInput<typeof OrganizationOutput>;
 export const OrganizationJSON = v.object({
   id: ID,
   name: v.string(),
-  createdAt: v.pipe(v.string(), v.isoDateTime()),
-  updatedAt: v.pipe(v.string(), v.isoDateTime()),
+  createdAt: ISOTimestamp,
+  updatedAt: ISOTimestamp,
 });
 
 export const OrganizationListJSON = v.object({

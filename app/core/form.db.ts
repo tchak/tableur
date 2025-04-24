@@ -63,7 +63,14 @@ export async function formCreate(
         },
       },
     },
-    select: { id: true, name: true, description: true, createdAt: true, updatedAt: true },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      paths: { orderBy: { createdAt: 'asc' }, select: { path: true } },
+      createdAt: true,
+      updatedAt: true,
+    },
   });
   return v.parse(FormOutput, form);
 }
@@ -78,6 +85,7 @@ export async function formList({ tableId }: TableParams) {
       id: true,
       name: true,
       description: true,
+      paths: { orderBy: { createdAt: 'asc' }, select: { path: true } },
       createdAt: true,
       updatedAt: true,
     },
@@ -96,6 +104,7 @@ export async function formGet({ tableId, formId }: FormParams) {
       id: true,
       name: true,
       description: true,
+      paths: { orderBy: { createdAt: 'asc' }, select: { path: true } },
       createdAt: true,
       updatedAt: true,
       pages: {
@@ -141,7 +150,14 @@ export async function formUpdate({ tableId, formId }: FormParams, input: FormUpd
       deletedAt: null,
     },
     data: { ...input },
-    select: { id: true, name: true, description: true, createdAt: true, updatedAt: true },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      paths: { orderBy: { createdAt: 'asc' }, select: { path: true } },
+      createdAt: true,
+      updatedAt: true,
+    },
   });
   return v.parse(FormOutput, form);
 }

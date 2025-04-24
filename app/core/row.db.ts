@@ -6,15 +6,15 @@ import { RowGetOutput, RowOutput } from './row.types';
 import type { TableParams } from './table.types';
 import { DeletedOutput, type DeletedInput } from './types';
 
-export function rowCreate({ tableId }: TableParams, { data }: RowCreateInput) {
-  return prisma.$transaction(async (tx) => {
+export async function rowCreate({ tableId }: TableParams, { data }: RowCreateInput) {
+  const row: RowInput = await prisma.$transaction(async (tx) => {
     const sequence = await tx.tableRowSequence.upsert({
       where: { tableId },
       update: { lastRowNumber: { increment: 1 } },
       create: { tableId },
       select: { lastRowNumber: true },
     });
-    const row: RowInput = await prisma.row.create({
+    return prisma.row.create({
       data: {
         number: sequence.lastRowNumber,
         table: {
@@ -34,8 +34,8 @@ export function rowCreate({ tableId }: TableParams, { data }: RowCreateInput) {
         updatedAt: true,
       },
     });
-    return v.parse(RowOutput, row);
   });
+  return v.parse(RowOutput, row);
 }
 
 export async function rowGet({ tableId, rowId }: RowParams) {
@@ -58,6 +58,7 @@ export async function rowGet({ tableId, rowId }: RowParams) {
       submission: {
         select: {
           id: true,
+          number: true,
           state: true,
           submittedAt: true,
           createdAt: true,

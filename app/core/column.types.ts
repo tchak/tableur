@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 
 import { ColumnType } from '../generated/prisma';
-import { ID, Name, Timestamp } from './types';
+import { ID, ISOTimestamp, Name, Timestamp } from './types';
 
 export const ColumnCreateInput = v.variant('type', [
   v.object({
@@ -29,6 +29,13 @@ const ColumnFragment = v.object({
   updatedAt: Timestamp,
 });
 
+const ColumnJSONFragment = v.object({
+  id: ID,
+  name: v.string(),
+  createdAt: ISOTimestamp,
+  updatedAt: ISOTimestamp,
+});
+
 export const ColumnOutput = v.variant('type', [
   v.object({
     type: v.literal(ColumnType.text),
@@ -45,6 +52,25 @@ export const ColumnOutput = v.variant('type', [
   v.object({
     type: v.literal(ColumnType.datetime),
     ...ColumnFragment.entries,
+  }),
+]);
+
+export const ColumnJSON = v.variant('type', [
+  v.object({
+    type: v.literal(ColumnType.text),
+    ...ColumnJSONFragment.entries,
+  }),
+  v.object({
+    type: v.literal(ColumnType.number),
+    ...ColumnJSONFragment.entries,
+  }),
+  v.object({
+    type: v.literal(ColumnType.boolean),
+    ...ColumnJSONFragment.entries,
+  }),
+  v.object({
+    type: v.literal(ColumnType.datetime),
+    ...ColumnJSONFragment.entries,
   }),
 ]);
 

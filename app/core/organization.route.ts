@@ -2,12 +2,14 @@ import { Hono } from 'hono';
 import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
 
+import { env } from '../services/env';
 import { parseServerError } from './error.types';
 import {
   organizationCreate,
   organizationDelete,
   organizationGet,
   organizationList,
+  organizationPathList,
   organizationUpdate,
 } from './organization.db';
 import {
@@ -33,6 +35,7 @@ organizations.get(
         },
       },
     },
+    validateResponse: env.NODE_ENV == 'test',
   }),
   async (c) => {
     const data = await organizationList();
@@ -70,6 +73,11 @@ organization.patch(
 organization.delete('/', validator('param', OrganizationParams), async (c) => {
   const params = c.req.valid('param');
   const data = await organizationDelete(params);
+  return c.json({ data });
+});
+organization.get('/paths', validator('param', OrganizationParams), async (c) => {
+  const params = c.req.valid('param');
+  const data = await organizationPathList(params);
   return c.json({ data });
 });
 

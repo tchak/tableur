@@ -73,4 +73,20 @@ describe('api/v1/organizations', () => {
       expect(response.status).toBe(404);
     }
   });
+
+  it('should update an organization', async () => {
+    const response = await app.request(`/api/v1/organizations/${organizationId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Hello World!',
+      }),
+    });
+    expect(response.status).toBe(200);
+  });
+
+  it('should list organization paths', async () => {
+    const response = await app.request(`/api/v1/organizations/${organizationId}/paths`);
+    expect(response.status).toBe(200);
+  });
 });

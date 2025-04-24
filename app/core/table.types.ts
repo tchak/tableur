@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 
-import { ColumnCreateInput, ColumnOutput } from './column.types';
-import { Data, Description, ID, Name, Timestamp } from './types';
+import { ColumnCreateInput, ColumnJSON, ColumnOutput } from './column.types';
+import { Data, Description, ID, ISOTimestamp, Name, Timestamp } from './types';
 
 export const TableCreateInput = v.object({
   name: Name,
@@ -19,11 +19,15 @@ export const TableUpdateInput = v.partial(
 );
 export type TableUpdateInput = v.InferInput<typeof TableUpdateInput>;
 
-export const TableOutput = v.object({
+const TableFragment = v.object({
   id: ID,
   number: v.number(),
   name: v.string(),
   description: v.nullable(v.string()),
+});
+
+export const TableOutput = v.object({
+  ...TableFragment.entries,
   createdAt: Timestamp,
   updatedAt: Timestamp,
 });
@@ -37,3 +41,22 @@ export type TableGetInput = v.InferInput<typeof TableGetOutput>;
 
 export const TableParams = v.object({ tableId: ID });
 export type TableParams = v.InferOutput<typeof TableParams>;
+
+const TableJSON = v.object({
+  ...TableFragment.entries,
+  createdAt: ISOTimestamp,
+  updatedAt: ISOTimestamp,
+});
+
+export const _TableJSON = v.object({
+  data: TableJSON,
+});
+
+export const TableListJSON = v.object({
+  data: v.array(TableJSON),
+  meta: v.object({ total: v.pipe(v.number(), v.integer()) }),
+});
+
+export const TableGetJSON = v.object({
+  data: v.object({ ...TableJSON.entries, columns: v.array(ColumnJSON) }),
+});

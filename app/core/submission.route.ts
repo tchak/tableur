@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
-import { validator } from 'hono-openapi/valibot';
+import { describeRoute } from 'hono-openapi';
+import { resolver, validator } from 'hono-openapi/valibot';
 
+import { env } from '../services/env';
+import { parseServerError } from './error.types';
 import {
   submissionDelete,
   submissionGet,
@@ -8,22 +11,65 @@ import {
   submissionStart,
   submissionSubmit,
 } from './submission.db';
-import { StartParams, SubmissionParams } from './submission.types';
+import {
+  StartParams,
+  SubmissionGetJSON,
+  SubmissionListJSON,
+  SubmissionParams,
+} from './submission.types';
 
 const submissions = new Hono();
 const submission = new Hono();
 const start = new Hono();
 
-submissions.get('/', async (c) => {
-  const data = await submissionList();
-  return c.json({ data, meta: { total: data.length } });
-});
+submissions.get(
+  '/',
+  describeRoute({
+    description: 'List submissions',
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: resolver(SubmissionListJSON),
+          },
+        },
+      },
+    },
+    validateResponse: env.NODE_ENV == 'test',
+  }),
+  async (c) => {
+    const data = await submissionList();
+    return c.json({ data, meta: { total: data.length } });
+  },
+);
 
-submission.get('/', validator('param', SubmissionParams), async (c) => {
-  const params = c.req.valid('param');
-  const data = await submissionGet(params);
-  return c.json({ data });
-});
+submission.get(
+  '/',
+  describeRoute({
+    description: 'Get submission',
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: resolver(SubmissionGetJSON),
+          },
+        },
+      },
+    },
+    validateResponse: env.NODE_ENV == 'test',
+  }),
+  validator('param', SubmissionParams),
+  async (c) => {
+    const params = c.req.valid('param');
+    try {
+      const data = await submissionGet(params);
+      return c.json({ data });
+    } catch (error) {
+      const { message, status } = parseServerError(error);
+      return c.json({ error: message }, { status });
+    }
+  },
+);
 
 submission.delete('/', validator('param', SubmissionParams), async (c) => {
   const params = c.req.valid('param');
@@ -40,7 +86,7 @@ submission.post('/', validator('param', SubmissionParams), async (c) => {
 start.post(':path', validator('param', StartParams), async (c) => {
   const params = c.req.valid('param');
   const data = await submissionStart(params);
-  return c.json({ data });
+  return c.json({ data }, { status: 201 });
 });
 
 export { start, submission, submissions };

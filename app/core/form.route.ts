@@ -2,8 +2,16 @@ import { Hono } from 'hono';
 import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
 
+import { env } from '../services/env';
+import { parseServerError } from './error.types';
 import { formCreate, formDelete, formGet, formList, formUpdate } from './form.db';
-import { FormCreateInput, FormListJSON, FormParams, FormUpdateInput } from './form.types';
+import {
+  FormCreateInput,
+  FormGetJSON,
+  FormListJSON,
+  FormParams,
+  FormUpdateInput,
+} from './form.types';
 import { TableParams } from './table.types';
 
 const forms = new Hono();
@@ -22,6 +30,7 @@ forms.get(
         },
       },
     },
+    validateResponse: env.NODE_ENV == 'test',
   }),
   validator('param', TableParams),
   async (c) => {
@@ -38,11 +47,33 @@ forms.post('/', validator('param', TableParams), validator('json', FormCreateInp
   return c.json({ data }, { status: 201 });
 });
 
-form.get('/', validator('param', FormParams), async (c) => {
-  const params = c.req.valid('param');
-  const data = await formGet(params);
-  return c.json({ data });
-});
+form.get(
+  '/',
+  describeRoute({
+    description: 'Get form',
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: resolver(FormGetJSON),
+          },
+        },
+      },
+    },
+    validateResponse: env.NODE_ENV == 'test',
+  }),
+  validator('param', FormParams),
+  async (c) => {
+    const params = c.req.valid('param');
+    try {
+      const data = await formGet(params);
+      return c.json({ data });
+    } catch (error) {
+      const { message, status } = parseServerError(error);
+      return c.json({ error: message }, { status });
+    }
+  },
+);
 form.patch('/', validator('json', FormUpdateInput), validator('param', FormParams), async (c) => {
   const params = c.req.valid('param');
   const input = c.req.valid('json');

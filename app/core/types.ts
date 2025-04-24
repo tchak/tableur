@@ -1,8 +1,9 @@
 import * as v from 'valibot';
 
 export const ID = v.pipe(v.string(), v.uuid());
+export const ISOTimestamp = v.pipe(v.string(), v.isoTimestamp());
 export const Timestamp = v.union([
-  v.pipe(v.string(), v.isoTimestamp()),
+  ISOTimestamp,
   v.pipe(
     v.date(),
     v.transform((value) => value.toISOString()),
@@ -30,7 +31,7 @@ export const TypedValue = v.variant('type', [
   v.object({ type: v.literal('text'), value: v.string() }),
   v.object({ type: v.literal('number'), value: v.number() }),
   v.object({ type: v.literal('boolean'), value: v.boolean() }),
-  v.object({ type: v.literal('datetime'), value: v.pipe(v.string(), v.isoDateTime()) }),
+  v.object({ type: v.literal('datetime'), value: ISOTimestamp }),
 ]);
 
 export const Data = v.record(ID, TypedValue);
