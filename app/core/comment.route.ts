@@ -5,6 +5,7 @@ import { resolver, validator } from 'hono-openapi/valibot';
 import { env } from '../services/env';
 import { commentCreate, commentDelete, commentList } from './comment.db';
 import { CommentCreateInput, CommentListJSON, CommentParams } from './comment.types';
+import { handlePrismaError } from './error.types';
 import { RowParams } from './row.types';
 
 const comments = new Hono();
@@ -39,14 +40,14 @@ comments.post(
   async (c) => {
     const params = c.req.valid('param');
     const input = c.req.valid('json');
-    const data = await commentCreate(params, input);
+    const data = await commentCreate(params, input).catch(handlePrismaError);
     return c.json({ data }, { status: 201 });
   },
 );
 
 comment.delete('/', validator('param', CommentParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await commentDelete(params);
+  const data = await commentDelete(params).catch(handlePrismaError);
   return c.json({ data });
 });
 

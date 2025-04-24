@@ -1,7 +1,7 @@
 import { vValidator as validator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
 
-import { parseServerError } from './error.types';
+import { handlePrismaError } from './error.types';
 import { OrganizationParams } from './organization.types';
 import { tableClone, tableCreate, tableDelete, tableGet, tableList, tableUpdate } from './table.db';
 import { TableCreateInput, TableParams, TableUpdateInput } from './table.types';
@@ -29,13 +29,8 @@ tables.post(
 
 table.get('/', validator('param', TableParams), async (c) => {
   const params = c.req.valid('param');
-  try {
-    const data = await tableGet(params);
-    return c.json({ data });
-  } catch (error) {
-    const { message, status } = parseServerError(error);
-    return c.json({ error: message }, { status });
-  }
+  const data = await tableGet(params).catch(handlePrismaError);
+  return c.json({ data });
 });
 table.patch(
   '/',
@@ -44,18 +39,18 @@ table.patch(
   async (c) => {
     const params = c.req.valid('param');
     const input = c.req.valid('json');
-    const data = await tableUpdate(params, input);
+    const data = await tableUpdate(params, input).catch(handlePrismaError);
     return c.json({ data });
   },
 );
 table.delete('/', validator('param', TableParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await tableDelete(params);
+  const data = await tableDelete(params).catch(handlePrismaError);
   return c.json({ data });
 });
 table.post('/clone', validator('param', TableParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await tableClone(params);
+  const data = await tableClone(params).catch(handlePrismaError);
   return c.json({ data });
 });
 

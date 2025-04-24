@@ -3,7 +3,7 @@ import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
 
 import { env } from '../services/env';
-import { parseServerError } from './error.types';
+import { handlePrismaError } from './error.types';
 import { formCreate, formDelete, formGet, formList, formUpdate } from './form.db';
 import {
   FormCreateInput,
@@ -65,24 +65,19 @@ form.get(
   validator('param', FormParams),
   async (c) => {
     const params = c.req.valid('param');
-    try {
-      const data = await formGet(params);
-      return c.json({ data });
-    } catch (error) {
-      const { message, status } = parseServerError(error);
-      return c.json({ error: message }, { status });
-    }
+    const data = await formGet(params).catch(handlePrismaError);
+    return c.json({ data });
   },
 );
 form.patch('/', validator('json', FormUpdateInput), validator('param', FormParams), async (c) => {
   const params = c.req.valid('param');
   const input = c.req.valid('json');
-  const data = await formUpdate(params, input);
+  const data = await formUpdate(params, input).catch(handlePrismaError);
   return c.json({ data });
 });
 form.delete('/', validator('param', FormParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await formDelete(params);
+  const data = await formDelete(params).catch(handlePrismaError);
   return c.json({ data });
 });
 

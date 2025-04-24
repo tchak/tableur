@@ -3,7 +3,7 @@ import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
 
 import { env } from '../services/env';
-import { parseServerError } from './error.types';
+import { handlePrismaError } from './error.types';
 import {
   organizationCreate,
   organizationDelete,
@@ -51,13 +51,8 @@ organizations.post('/', validator('json', OrganizationCreateInput), async (c) =>
 
 organization.get('/', validator('param', OrganizationParams), async (c) => {
   const params = c.req.valid('param');
-  try {
-    const data = await organizationGet(params);
-    return c.json({ data });
-  } catch (error) {
-    const { message, status } = parseServerError(error);
-    return c.json({ error: message }, { status });
-  }
+  const data = await organizationGet(params).catch(handlePrismaError);
+  return c.json({ data });
 });
 organization.patch(
   '/',
@@ -66,13 +61,13 @@ organization.patch(
   async (c) => {
     const params = c.req.valid('param');
     const input = c.req.valid('json');
-    const data = await organizationUpdate(params, input);
+    const data = await organizationUpdate(params, input).catch(handlePrismaError);
     return c.json({ data });
   },
 );
 organization.delete('/', validator('param', OrganizationParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await organizationDelete(params);
+  const data = await organizationDelete(params).catch(handlePrismaError);
   return c.json({ data });
 });
 organization.get('/paths', validator('param', OrganizationParams), async (c) => {

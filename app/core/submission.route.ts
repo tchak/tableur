@@ -3,7 +3,7 @@ import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
 
 import { env } from '../services/env';
-import { parseServerError } from './error.types';
+import { handlePrismaError } from './error.types';
 import {
   submissionDelete,
   submissionGet,
@@ -61,31 +61,26 @@ submission.get(
   validator('param', SubmissionParams),
   async (c) => {
     const params = c.req.valid('param');
-    try {
-      const data = await submissionGet(params);
-      return c.json({ data });
-    } catch (error) {
-      const { message, status } = parseServerError(error);
-      return c.json({ error: message }, { status });
-    }
+    const data = await submissionGet(params).catch(handlePrismaError);
+    return c.json({ data });
   },
 );
 
 submission.delete('/', validator('param', SubmissionParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await submissionDelete(params);
+  const data = await submissionDelete(params).catch(handlePrismaError);
   return c.json({ data });
 });
 
 submission.post('/', validator('param', SubmissionParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await submissionSubmit(params);
+  const data = await submissionSubmit(params).catch(handlePrismaError);
   return c.json({ data });
 });
 
 start.post(':path', validator('param', StartParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await submissionStart(params);
+  const data = await submissionStart(params).catch(handlePrismaError);
   return c.json({ data }, { status: 201 });
 });
 

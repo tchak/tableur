@@ -1,31 +1,18 @@
-import * as v from 'valibot';
+import { HTTPException } from 'hono/http-exception';
+import { Prisma } from '../generated/prisma';
 
-const PrismaError = v.pipe(
-  v.variant('code', [
-    v.object({
-      code: v.picklist(['P2015', 'P2025']),
-      message: v.string(),
-    }),
-    v.object({
-      code: v.literal('P1008'),
-      message: v.string(),
-    }),
-  ]),
-  v.transform((error) => {
+export function handlePrismaError(error: unknown) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
     switch (error.code) {
       case 'P2025':
       case 'P2015':
-        return { message: error.message, status: 404 as const };
+        throw new HTTPException(404, { message: error.message, cause: error.cause });
       case 'P1008':
-        return { message: error.message, status: 408 as const };
+        throw new HTTPException(408, { message: error.message, cause: error.cause });
     }
-  }),
-);
-
-export function parseServerError(error: unknown) {
-  const result = v.safeParse(PrismaError, error);
-  if (result.success) {
-    return result.output;
+    throw new HTTPException(500, { message: error.message, cause: error.cause });
+  } else if (error instanceof Prisma.PrismaClientValidationError) {
+    throw new HTTPException(500, { message: error.message, cause: error.cause });
   }
-  return { message: 'Unknown error', status: 500 as const };
+  throw new HTTPException(500, { message: 'Internal Server Error', cause: error });
 }
