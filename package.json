@@ -17,6 +17,7 @@
     "@flystorage/local-fs": "^1.0.1",
     "@hapi/iron": "^7.0.1",
     "@hono/valibot-validator": "^0.5.2",
+    "@keyv/postgres": "^2.1.4",
     "@prisma/client": "^6.6.0",
     "cacheable": "^1.8.10",
     "hono": "^4.7.7",

@@ -9,7 +9,7 @@ export const env = createEnv({
       STORAGE_HOSTNAME: v.pipe(v.string(), v.url()),
     },
     shared: {
-      NODE_ENV: v.picklist(['development', 'production', 'test']),
+      NODE_ENV: v.fallback(v.picklist(['development', 'production', 'test']), 'development'),
     },
   },
   values: import.meta.env,
