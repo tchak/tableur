@@ -4,11 +4,9 @@ import * as v from 'valibot';
 import { app } from '../server/app';
 import { prisma } from '../services/db';
 import { formCreate } from './form.db';
-import { FormGetJSON, FormJSON, FormListJSON } from './form.types';
+import { FormCreateJSON, FormGetJSON, FormListJSON } from './form.types';
 import { organizationCreate } from './organization.db';
 import { tableCreate } from './table.db';
-
-const FormCreateJSON = v.object({ data: FormJSON });
 
 describe('api/v1/tables/:id/forms', () => {
   let tableId: string;

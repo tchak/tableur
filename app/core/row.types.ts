@@ -52,3 +52,4 @@ export const RowListJSON = v.object({
   data: v.array(RowJSON),
   meta: v.object({ total: v.pipe(v.number(), v.integer()) }),
 });
+export const RowCreateJSON = v.object({ data: RowJSON });

@@ -3,25 +3,9 @@ import * as v from 'valibot';
 
 import { app } from '../server/app';
 import { prisma } from '../services/db';
-import { ColumnOutput } from './column.types';
 import { organizationCreate } from './organization.db';
-import { RowOutput } from './row.types';
-import { SubmissionOutput } from './submission.types';
+import { RowCreateJSON, RowGetJSON, RowListJSON } from './row.types';
 import { tableCreate } from './table.db';
-import { TableOutput } from './table.types';
-
-const RowListOutput = v.object({
-  data: v.array(RowOutput),
-  meta: v.object({ total: v.number() }),
-});
-const RowCreateOutput = v.object({ data: RowOutput });
-const RowGetOutput = v.object({
-  data: v.object({
-    ...RowOutput.entries,
-    table: v.object({ ...TableOutput.entries, columns: v.array(ColumnOutput) }),
-    submission: v.nullable(SubmissionOutput),
-  }),
-});
 
 describe('api/v1/tables/:id/rows', () => {
   let organizationId: string;
@@ -45,7 +29,7 @@ describe('api/v1/tables/:id/rows', () => {
     const response = await app.request(`/api/v1/tables/${tableId}/rows`);
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: rows } = v.parse(RowListOutput, data);
+    const { data: rows } = v.parse(RowListJSON, data);
     expect(rows.length).toBe(1);
   });
 
@@ -53,7 +37,7 @@ describe('api/v1/tables/:id/rows', () => {
     const response = await app.request(`/api/v1/tables/${tableId}/rows/${rowId}`);
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: row } = v.parse(RowGetOutput, data);
+    const { data: row } = v.parse(RowGetJSON, data);
     expect(row.id).toEqual(rowId);
     expect(row.table.id).toEqual(tableId);
     expect(row.table.columns.length).toBe(1);
@@ -77,7 +61,7 @@ describe('api/v1/tables/:id/rows', () => {
     });
     expect(response.status).toBe(201);
     const data = await response.json();
-    const { data: row } = v.parse(RowCreateOutput, data);
+    const { data: row } = v.parse(RowCreateJSON, data);
     expect(row.number).toEqual(2);
     const typedValue = row.data[columnId];
     expect(typedValue?.type).toEqual('text');
@@ -87,7 +71,7 @@ describe('api/v1/tables/:id/rows', () => {
       const response = await app.request(`/api/v1/tables/${tableId}/rows`);
       expect(response.status).toBe(200);
       const data = await response.json();
-      const { data: rows } = v.parse(RowListOutput, data);
+      const { data: rows } = v.parse(RowListJSON, data);
       expect(rows.length).toBe(2);
       expect(rows.map(({ number }) => number)).toStrictEqual([1, 2]);
     }

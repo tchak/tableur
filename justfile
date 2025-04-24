@@ -18,7 +18,7 @@ install:
 setup: install lint test-ci db-push-dev
 
 [group('lint')]
-lint: tsc eslint
+lint: tsc eslint prisma-validate
 
 [group('lint')]
 eslint:
@@ -27,6 +27,10 @@ eslint:
 [group('lint')]
 tsc:
   bun -b tsc
+
+[group('lint')]
+prisma-validate:
+  bun -b prisma validate
 
 [group('test')]
 test:

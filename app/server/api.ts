@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { secureHeaders } from 'hono/secure-headers';
 
+import { comment, comments } from '../core/comment.route';
 import { form, forms } from '../core/form.route';
 import { organization, organizations } from '../core/organization.route';
 import { row, rows } from '../core/row.route';
@@ -16,9 +17,13 @@ api.use(secureHeaders());
 organization.route('tables', tables);
 organizations.route(':organizationId', organization);
 
+comments.route(':commentId', comment);
 submissions.route(':submissionId', submission);
 forms.route(':formId', form);
+
+row.route('comments', comments);
 rows.route(':rowId', row);
+
 table.route('rows', rows);
 table.route('forms', forms);
 

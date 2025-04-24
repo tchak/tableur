@@ -111,3 +111,5 @@ export const FormPathOutput = v.object({
   form: v.nullable(FormFragment),
 });
 export type FormPathInput = v.InferInput<typeof FormPathOutput>;
+
+export const FormCreateJSON = v.object({ data: FormJSON });

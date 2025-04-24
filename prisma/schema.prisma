@@ -34,6 +34,7 @@ model User {
   teams         TeamMembership[]
   organizations OrganizationMembership[]
   submissions   SubmissionMembership[]
+  comments      Comment[]
 
   @@index([deletedAt])
   @@map("users")
@@ -217,11 +218,27 @@ model Row {
   table      Table       @relation(fields: [tableId], references: [id], onDelete: Cascade)
   cells      Cell[]
   submission Submission?
+  comments   Comment[]
 
   @@unique([tableId, number])
   @@index([deletedAt])
   @@index([tableId])
   @@map("rows")
+}
+
+model Comment {
+  id        String    @id @default(uuid()) @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  body      String
+  rowId     String    @map("row_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  row  Row  @relation(fields: [rowId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
 }
 
 model Cell {
