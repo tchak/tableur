@@ -4,13 +4,7 @@ import * as v from 'valibot';
 import { app } from '../server/app';
 import { prisma } from '../services/db';
 import { organizationCreate } from './organization.db';
-import { OrganizationOutput } from './organization.types';
-
-const OrganizationListOutput = v.object({
-  data: v.array(OrganizationOutput),
-  meta: v.object({ total: v.number() }),
-});
-const OrganizationGetOutput = v.object({ data: OrganizationOutput });
+import { OrganizationGetJSON, OrganizationListJSON } from './organization.types';
 
 describe('api/v1/organizations', () => {
   let organizationId: string;
@@ -24,7 +18,7 @@ describe('api/v1/organizations', () => {
     const response = await app.request('/api/v1/organizations');
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: organizations } = v.parse(OrganizationListOutput, data);
+    const { data: organizations } = v.parse(OrganizationListJSON, data);
     expect(organizations.length).toBe(1);
   });
 
@@ -32,7 +26,7 @@ describe('api/v1/organizations', () => {
     const response = await app.request(`/api/v1/organizations/${organizationId}`);
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: organization } = v.parse(OrganizationGetOutput, data);
+    const { data: organization } = v.parse(OrganizationGetJSON, data);
     expect(organization.id).toEqual(organizationId);
   });
 
@@ -46,14 +40,14 @@ describe('api/v1/organizations', () => {
     });
     expect(response.status).toBe(201);
     const data = await response.json();
-    const { data: organization } = v.parse(OrganizationGetOutput, data);
+    const { data: organization } = v.parse(OrganizationGetJSON, data);
     expect(organization.name).toEqual('Hello World');
 
     {
       const response = await app.request('/api/v1/organizations');
       expect(response.status).toBe(200);
       const data = await response.json();
-      const { data: organizations } = v.parse(OrganizationListOutput, data);
+      const { data: organizations } = v.parse(OrganizationListJSON, data);
       expect(organizations.length).toBe(2);
       expect(organizations.map(({ name }) => name)).toStrictEqual([
         'Test Organization',
@@ -82,7 +76,7 @@ describe('api/v1/organizations', () => {
         name: 'Hello World!',
       }),
     });
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
   });
 
   it('should list organization paths', async () => {

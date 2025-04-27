@@ -4,19 +4,19 @@ import { prisma } from '../services/db';
 import { FormPathOutput, type FormPathInput } from './form.types';
 import type {
   OrganizationCreateInput,
-  OrganizationInput,
+  OrganizationJSON,
   OrganizationParams,
   OrganizationUpdateInput,
 } from './organization.types';
-import { OrganizationOutput } from './organization.types';
 import { DeletedOutput, type DeletedInput } from './types';
 
-export async function organizationCreate(input: OrganizationCreateInput) {
-  const organization: OrganizationInput = await prisma.organization.create({
+export async function organizationCreate(
+  input: OrganizationCreateInput,
+): Promise<OrganizationJSON> {
+  return prisma.organization.create({
     data: input,
     select: { id: true, name: true, createdAt: true, updatedAt: true },
   });
-  return v.parse(OrganizationOutput, organization);
 }
 
 export async function organizationDelete({ organizationId }: OrganizationParams) {
@@ -31,8 +31,8 @@ export async function organizationDelete({ organizationId }: OrganizationParams)
 export async function organizationUpdate(
   { organizationId }: OrganizationParams,
   input: OrganizationUpdateInput,
-) {
-  const organization: OrganizationInput = await prisma.organization.update({
+): Promise<void> {
+  await prisma.organization.update({
     where: { id: organizationId, deletedAt: null },
     data: input,
     select: {
@@ -42,11 +42,12 @@ export async function organizationUpdate(
       updatedAt: true,
     },
   });
-  return v.parse(OrganizationOutput, organization);
 }
 
-export async function organizationGet({ organizationId }: OrganizationParams) {
-  const organization: OrganizationInput = await prisma.organization.findUniqueOrThrow({
+export async function organizationGet({
+  organizationId,
+}: OrganizationParams): Promise<OrganizationJSON> {
+  return prisma.organization.findUniqueOrThrow({
     where: { id: organizationId, deletedAt: null },
     select: {
       id: true,
@@ -55,11 +56,10 @@ export async function organizationGet({ organizationId }: OrganizationParams) {
       updatedAt: true,
     },
   });
-  return v.parse(OrganizationOutput, organization);
 }
 
-export async function organizationList() {
-  const organizations: OrganizationInput[] = await prisma.organization.findMany({
+export async function organizationList(): Promise<OrganizationJSON[]> {
+  return prisma.organization.findMany({
     where: { deletedAt: null },
     orderBy: { createdAt: 'asc' },
     take: 100,
@@ -70,7 +70,6 @@ export async function organizationList() {
       updatedAt: true,
     },
   });
-  return v.parse(v.array(OrganizationOutput), organizations);
 }
 
 export async function organizationPathList({ organizationId }: OrganizationParams) {

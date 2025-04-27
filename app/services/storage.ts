@@ -23,7 +23,7 @@ const temporaryUrlGenerator: LocalTemporaryUrlGenerator = {
     return url.toString();
   },
 };
-const storage = new FileStorage(
+export const storage = new FileStorage(
   new LocalStorageAdapter(rootDirectory, undefined, undefined, undefined, temporaryUrlGenerator),
 );
 

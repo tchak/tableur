@@ -13,7 +13,7 @@ import { TableGetOutput, TableOutput } from './table.types';
 import { DeletedOutput, type DeletedInput } from './types';
 
 export async function tableList({ organizationId }: OrganizationParams) {
-  const tables: TableInput[] = await prisma.table.findMany({
+  return prisma.table.findMany({
     where: { organization: { id: organizationId, deletedAt: null }, deletedAt: null },
     orderBy: { number: 'asc' },
     take: 100,
@@ -26,7 +26,6 @@ export async function tableList({ organizationId }: OrganizationParams) {
       updatedAt: true,
     },
   });
-  return v.parse(v.array(TableOutput), tables);
 }
 
 export async function tableGet({ tableId }: TableParams) {
@@ -114,8 +113,11 @@ export async function tableCreate(
   });
 }
 
-export async function tableUpdate({ tableId }: TableParams, input: TableUpdateInput) {
-  const table: TableInput = await prisma.table.update({
+export async function tableUpdate(
+  { tableId }: TableParams,
+  input: TableUpdateInput,
+): Promise<void> {
+  await prisma.table.update({
     where: { id: tableId, organization: { deletedAt: null }, deletedAt: null },
     data: { ...input },
     select: {
@@ -127,7 +129,6 @@ export async function tableUpdate({ tableId }: TableParams, input: TableUpdateIn
       updatedAt: true,
     },
   });
-  return v.parse(TableOutput, table);
 }
 
 export async function tableDelete({ tableId }: TableParams) {

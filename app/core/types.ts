@@ -58,6 +58,8 @@ export const TypedValue = v.variant('type', [
   v.object({ type: FileType, value: v.array(FileValue) }),
 ]);
 
+export type TypedValue = v.InferOutput<typeof TypedValue>;
+
 export const NewValue = v.variant('type', [
   v.object({ type: TextType, value: v.string() }),
   v.object({ type: NumberType, value: Int }),

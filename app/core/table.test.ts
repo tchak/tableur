@@ -86,7 +86,7 @@ describe('api/v1/tables', () => {
         name: 'Hello World!',
       }),
     });
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
   });
 
   it('should clone a table', async () => {

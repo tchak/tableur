@@ -14,6 +14,7 @@ import {
 } from './organization.db';
 import {
   OrganizationCreateInput,
+  OrganizationGetJSON,
   OrganizationListJSON,
   OrganizationParams,
   OrganizationUpdateInput,
@@ -49,11 +50,28 @@ organizations.post('/', validator('json', OrganizationCreateInput), async (c) =>
   return c.json({ data }, { status: 201 });
 });
 
-organization.get('/', validator('param', OrganizationParams), async (c) => {
-  const params = c.req.valid('param');
-  const data = await organizationGet(params).catch(handlePrismaError);
-  return c.json({ data });
-});
+organization.get(
+  '/',
+  describeRoute({
+    description: 'Get organization',
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: resolver(OrganizationGetJSON),
+          },
+        },
+      },
+    },
+    validateResponse: env.NODE_ENV == 'test',
+  }),
+  validator('param', OrganizationParams),
+  async (c) => {
+    const params = c.req.valid('param');
+    const data = await organizationGet(params).catch(handlePrismaError);
+    return c.json({ data });
+  },
+);
 organization.patch(
   '/',
   validator('json', OrganizationUpdateInput),
@@ -61,8 +79,8 @@ organization.patch(
   async (c) => {
     const params = c.req.valid('param');
     const input = c.req.valid('json');
-    const data = await organizationUpdate(params, input).catch(handlePrismaError);
-    return c.json({ data });
+    await organizationUpdate(params, input).catch(handlePrismaError);
+    return c.body(null, { status: 204 });
   },
 );
 organization.delete('/', validator('param', OrganizationParams), async (c) => {
