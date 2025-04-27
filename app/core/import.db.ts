@@ -12,10 +12,10 @@ import type { TableImportDataInput, TableImportInput, TableParams } from './tabl
 import type { Data } from './types';
 
 export async function importPreview(input: ImportPreviewInput) {
-  const stream = Readable.fromWeb(input.file.stream());
-  const preview = await parseImportPreview(stream);
+  const [stream1, stream2] = input.file.stream().tee();
+  const preview = await parseImportPreview(stream1);
   const { id } = await prisma.importPreview.create({ data: preview, select: { id: true } });
-  await storage.write(`import/${id}.csv`, stream);
+  await storage.write(`import/${id}.csv`, stream2);
   return { id, ...preview };
 }
 
@@ -53,8 +53,6 @@ export async function tableImportData({ tableId }: TableParams, input: TableImpo
     orderBy: { position: 'asc' },
     select: { id: true, type: true },
   });
-  const path = `import/${input.importId}.csv`;
-  const stream = await storage.read(path);
   const headers = Object.fromEntries(
     Object.entries(input.mapping).map(([header, columnId]) => [columnId, header] as const),
   );
@@ -65,6 +63,8 @@ export async function tableImportData({ tableId }: TableParams, input: TableImpo
       columns.push({ id, type, name: header });
     }
   }
+  const path = `import/${input.importId}.csv`;
+  const stream = await storage.read(path);
   const data = await parseImportData(stream, columns);
 
   if (data.length > 0) {
@@ -86,15 +86,19 @@ export async function tableImportData({ tableId }: TableParams, input: TableImpo
   return { rows: data.length };
 }
 
-async function parseImportPreview(stream: Readable) {
+async function parseImportPreview<T>(stream: ReadableStream<T>) {
+  const [stream1, stream2] = stream.tee();
+  const delimiter = await guessCsvSeparator(stream1);
   return new Promise<Omit<ImportPreviewJSON, 'id'>>((resolve, reject) => {
     let columns: ImportPreviewJSON['columns'] = [];
     const rows: ImportPreviewJSON['rows'] = [];
-    parseStream(stream, {
+    parseStream(Readable.fromWeb(stream2), {
+      delimiter,
       maxRows: 10,
       trim: true,
       discardUnmappedColumns: true,
       ignoreEmpty: true,
+      headers: true,
     })
       .on('headers', (headers: string[]) => {
         columns = headers.map((header) => ({
@@ -103,9 +107,9 @@ async function parseImportPreview(stream: Readable) {
         }));
         return headers;
       })
-      .on('data', (row: Record<string, string>) =>
-        rows.push(columns.map((column) => row[column.name] ?? null)),
-      )
+      .on('data', (row: Record<string, string>) => {
+        rows.push(columns.map((column) => row[column.name] ?? null));
+      })
       .on('end', () => {
         const columnValues = columns.map(
           (column, index) => [column, rows.map((row) => row.at(index))] as const,
@@ -144,4 +148,53 @@ function parseImportData(stream: Readable, columns: (ColumnImport & { id: string
       .on('end', () => resolve(rows))
       .on('error', reject);
   });
+}
+
+export async function guessCsvSeparator<T>(stream: ReadableStream<T>): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const candidates = [',', ';', '\t', '|'];
+    const lineLimit = 10; // How many lines we use for guessing
+    const buffer: string[] = [];
+    let leftover = '';
+    const readable = Readable.fromWeb(stream);
+
+    readable.setEncoding('utf-8');
+    readable
+      .on('data', (chunk: string) => {
+        leftover += chunk;
+        const lines = leftover.split(/\r?\n/);
+        leftover = lines.pop() || '';
+
+        buffer.push(...lines);
+
+        if (buffer.length >= lineLimit) {
+          readable.destroy(); // Stop reading more
+          resolve(guessFromLines(buffer.slice(0, lineLimit), candidates));
+        }
+      })
+      .on('end', () => {
+        if (buffer.length) {
+          resolve(guessFromLines(buffer, candidates));
+        } else {
+          resolve(',');
+        }
+      })
+      .on('error', (err) => reject(err));
+  });
+}
+
+function guessFromLines(lines: string[], candidates: string[]): string {
+  const scores: Record<string, number> = {};
+  for (const sep of candidates) {
+    let score = 0;
+    for (const line of lines) {
+      const count = line.split(sep).length;
+      if (count > 1) {
+        score += count;
+      }
+    }
+    scores[sep] = score;
+  }
+  const bestSeparator = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+  return bestSeparator ? bestSeparator[0] : ',';
 }

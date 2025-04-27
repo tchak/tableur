@@ -4,6 +4,7 @@ import { secureHeaders } from 'hono/secure-headers';
 
 import { comment, comments } from '../core/comment.route';
 import { form, forms } from '../core/form.route';
+import { imports } from '../core/import.route';
 import { organization, organizations } from '../core/organization.route';
 import { row, rows } from '../core/row.route';
 import { start, submission, submissions } from '../core/submission.route';
@@ -29,6 +30,7 @@ table.route('forms', forms);
 
 api.route('organizations', organizations);
 api.route('tables/:tableId', table);
+api.route('imports', imports);
 api.route('submissions', submissions);
 api.route('start', start);
 

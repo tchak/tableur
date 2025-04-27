@@ -50,7 +50,7 @@ export function parseStringValue(
 }
 
 function parseNumber(value: string): { type: 'number'; value: number } | null {
-  const result = v.safeParse(v.number(), value);
+  const result = v.safeParse(NumberValue, value);
   if (result.success) {
     return { type: 'number', value: result.output };
   }
@@ -81,11 +81,17 @@ function parseDateTime(value: string): { type: 'datetime'; value: string } | nul
   return null;
 }
 
+const NumberValue = v.pipe(v.string(), v.minLength(1), v.transform(Number), v.number());
+
 const TrueValue = v.pipe(
+  v.string(),
+  v.toLowerCase(),
   v.picklist(['true', 't', 'yes', 'on', 'oui']),
   v.transform(() => true),
 );
 const FalseValue = v.pipe(
+  v.string(),
+  v.toLowerCase(),
   v.picklist(['false', 'n', 'no', 'off', 'non']),
   v.transform(() => false),
 );
