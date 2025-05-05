@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { prisma } from '../services/db';
+import { prisma } from '~/services/db';
 
 import type { OrganizationParams } from './organization.types';
 import type {
@@ -14,7 +14,10 @@ import { DeletedOutput, type DeletedInput } from './types';
 
 export async function tableList({ organizationId }: OrganizationParams) {
   return prisma.table.findMany({
-    where: { organization: { id: organizationId, deletedAt: null }, deletedAt: null },
+    where: {
+      organization: { id: organizationId, deletedAt: null },
+      deletedAt: null,
+    },
     orderBy: { number: 'asc' },
     take: 100,
     select: {
@@ -63,7 +66,7 @@ export async function tableGet({ tableId }: TableParams) {
 
 export async function tableCreate(
   { organizationId }: OrganizationParams,
-  { columns, rows, ...data }: TableCreateInput,
+  { columns, rows, ...data }: TableCreateInput
 ) {
   return prisma.$transaction(async (tx) => {
     const sequence = await tx.organizationTableSequence.upsert({
@@ -115,7 +118,7 @@ export async function tableCreate(
 
 export async function tableUpdate(
   { tableId }: TableParams,
-  input: TableUpdateInput,
+  input: TableUpdateInput
 ): Promise<void> {
   await prisma.table.update({
     where: { id: tableId, organization: { deletedAt: null }, deletedAt: null },
@@ -154,7 +157,11 @@ export async function tableClone({ tableId }: TableParams) {
   const columns = await prisma.column.findMany({
     where: {
       deletedAt: null,
-      table: { id: tableId, organization: { deletedAt: null }, deletedAt: null },
+      table: {
+        id: tableId,
+        organization: { deletedAt: null },
+        deletedAt: null,
+      },
     },
     omit: {
       tableId: true,

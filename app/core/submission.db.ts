@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { prisma } from '../services/db';
+import { prisma } from '~/services/db';
 
 import {
   SubmissionOutput,
@@ -24,22 +24,24 @@ export async function submissionList() {
 }
 
 export async function submissionGet({ submissionId }: SubmissionParams) {
-  const submission: SubmissionInput = await prisma.submission.findUniqueOrThrow({
-    where: {
-      id: submissionId,
-      deletedAt: null,
-      form: { deletedAt: null },
-      table: { deletedAt: null, organization: { deletedAt: null } },
-    },
-    select: {
-      id: true,
-      state: true,
-      number: true,
-      submittedAt: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const submission: SubmissionInput = await prisma.submission.findUniqueOrThrow(
+    {
+      where: {
+        id: submissionId,
+        deletedAt: null,
+        form: { deletedAt: null },
+        table: { deletedAt: null, organization: { deletedAt: null } },
+      },
+      select: {
+        id: true,
+        state: true,
+        number: true,
+        submittedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }
+  );
   return v.parse(SubmissionOutput, submission);
 }
 

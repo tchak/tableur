@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
-import { app } from '../server/app';
-import { prisma } from '../services/db';
+import { app } from '~/server/app';
+import { prisma } from '~/services/db';
 import { organizationCreate } from './organization.db';
 import { tableCreate } from './table.db';
 import { _TableJSON, TableGetJSON, TableListJSON } from './table.types';
@@ -12,17 +12,21 @@ describe('api/v1/tables', () => {
   let tableId: string;
   beforeEach(async () => {
     await prisma.organization.deleteMany();
-    const organization = await organizationCreate({ name: 'Test Organization' });
+    const organization = await organizationCreate({
+      name: 'Test Organization',
+    });
     organizationId = organization.id;
     const table = await tableCreate(
       { organizationId },
-      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] },
+      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] }
     );
     tableId = table.id;
   });
 
   it('should return a list of tables', async () => {
-    const response = await app.request(`/api/v1/organizations/${organizationId}/tables`);
+    const response = await app.request(
+      `/api/v1/organizations/${organizationId}/tables`
+    );
     expect(response.status).toBe(200);
     const data = await response.json();
     const { data: tables } = v.parse(TableListJSON, data);
@@ -42,13 +46,16 @@ describe('api/v1/tables', () => {
   });
 
   it('should create a table', async () => {
-    const response = await app.request(`/api/v1/organizations/${organizationId}/tables`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Hello World',
-      }),
-    });
+    const response = await app.request(
+      `/api/v1/organizations/${organizationId}/tables`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Hello World',
+        }),
+      }
+    );
     expect(response.status).toBe(201);
     const data = await response.json();
     const { data: table } = v.parse(_TableJSON, data);
@@ -56,12 +63,17 @@ describe('api/v1/tables', () => {
     expect(table.number).toEqual(2);
 
     {
-      const response = await app.request(`/api/v1/organizations/${organizationId}/tables`);
+      const response = await app.request(
+        `/api/v1/organizations/${organizationId}/tables`
+      );
       expect(response.status).toBe(200);
       const data = await response.json();
       const { data: tables } = v.parse(TableListJSON, data);
       expect(tables.length).toBe(2);
-      expect(tables.map(({ name }) => name)).toStrictEqual(['Test Table', 'Hello World']);
+      expect(tables.map(({ name }) => name)).toStrictEqual([
+        'Test Table',
+        'Hello World',
+      ]);
       expect(tables.map(({ number }) => number)).toStrictEqual([1, 2]);
     }
   });

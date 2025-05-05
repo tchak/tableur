@@ -1,12 +1,21 @@
 import * as v from 'valibot';
-import { prisma } from '../services/db';
+import { prisma } from '~/services/db';
 
-import type { RowCreateInput, RowGetInput, RowInput, RowParams, RowUpdateInput } from './row.types';
+import type {
+  RowCreateInput,
+  RowGetInput,
+  RowInput,
+  RowParams,
+  RowUpdateInput,
+} from './row.types';
 import { RowGetOutput, RowOutput } from './row.types';
 import type { TableParams } from './table.types';
 import { DeletedOutput, type DeletedInput } from './types';
 
-export async function rowCreate({ tableId }: TableParams, { data }: RowCreateInput) {
+export async function rowCreate(
+  { tableId }: TableParams,
+  { data }: RowCreateInput
+) {
   const row: RowInput = await prisma.$transaction(async (tx) => {
     const sequence = await tx.tableRowSequence.upsert({
       where: { tableId },
@@ -138,7 +147,10 @@ export async function rowDelete({ tableId, rowId }: RowParams) {
   return v.parse(DeletedOutput, row);
 }
 
-export async function rowUpdate({ tableId, rowId }: RowParams, input: RowUpdateInput) {
+export async function rowUpdate(
+  { tableId, rowId }: RowParams,
+  input: RowUpdateInput
+) {
   const row = await prisma.row.update({
     where: {
       id: rowId,

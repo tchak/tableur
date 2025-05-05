@@ -2,13 +2,13 @@ import { parseStream } from 'fast-csv';
 import { Readable } from 'stream';
 import type { ReadableStream as NodeReadableStream } from 'stream/web';
 
-import { prisma } from '../services/db';
+import { prisma } from '~/services/db';
 import {
   deleteFile,
   readFile,
   writeFile,
   type BytesStream,
-} from '../services/storage';
+} from '~/services/storage';
 
 import type {
   ColumnImport,

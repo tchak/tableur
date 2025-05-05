@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
-import { app } from '../server/app';
-import { prisma } from '../services/db';
+import { app } from '~/server/app';
+import { prisma } from '~/services/db';
 import { formCreate } from './form.db';
 import { organizationCreate } from './organization.db';
 import { submissionStart } from './submission.db';
@@ -13,14 +13,16 @@ describe('api/v1/submissions', () => {
   let submissionId: string;
   beforeEach(async () => {
     await prisma.organization.deleteMany();
-    const organization = await organizationCreate({ name: 'Test Organization' });
+    const organization = await organizationCreate({
+      name: 'Test Organization',
+    });
     const table = await tableCreate(
       { organizationId: organization.id },
-      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] },
+      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] }
     );
     await formCreate(
       { tableId: table.id },
-      { name: 'Test Form', title: 'Test Section', path: 'test-form' },
+      { name: 'Test Form', title: 'Test Section', path: 'test-form' }
     );
     const submission = await submissionStart({ path: 'test-form' });
     submissionId = submission.id;

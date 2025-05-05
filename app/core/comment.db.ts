@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { prisma } from '../services/db';
+import { prisma } from '~/services/db';
 
 import {
   CommentOutput,
@@ -10,7 +10,10 @@ import {
 import { RowParams } from './row.types';
 import { DeletedOutput, type DeletedInput } from './types';
 
-export async function commentCreate(params: RowParams, input: CommentCreateInput) {
+export async function commentCreate(
+  params: RowParams,
+  input: CommentCreateInput
+) {
   const comment: CommentInput = await prisma.comment.create({
     data: {
       row: {
@@ -38,7 +41,11 @@ export async function commentDelete(params: CommentParams) {
     where: {
       id: params.commentId,
       deletedAt: null,
-      row: { id: params.rowId, deletedAt: null, table: { id: params.tableId, deletedAt: null } },
+      row: {
+        id: params.rowId,
+        deletedAt: null,
+        table: { id: params.tableId, deletedAt: null },
+      },
     },
     data: { deletedAt: new Date() },
     select: { id: true, deletedAt: true },
@@ -50,7 +57,11 @@ export async function commentList(params: RowParams) {
   const comments: CommentInput[] = await prisma.comment.findMany({
     where: {
       deletedAt: null,
-      row: { id: params.rowId, deletedAt: null, table: { id: params.tableId, deletedAt: null } },
+      row: {
+        id: params.rowId,
+        deletedAt: null,
+        table: { id: params.tableId, deletedAt: null },
+      },
     },
     orderBy: { createdAt: 'desc' },
     take: 100,

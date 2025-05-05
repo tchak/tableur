@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { prisma } from '../services/db';
+import { prisma } from '~/services/db';
 
 import type {
   FormCreateInput,
@@ -14,11 +14,15 @@ import { DeletedOutput, type DeletedInput } from './types';
 
 export async function formCreate(
   { tableId }: TableParams,
-  { title, path, ...input }: FormCreateInput,
+  { title, path, ...input }: FormCreateInput
 ) {
   const columns = await prisma.column.findMany({
     where: {
-      table: { id: tableId, deletedAt: null, organization: { deletedAt: null } },
+      table: {
+        id: tableId,
+        deletedAt: null,
+        organization: { deletedAt: null },
+      },
       deletedAt: null,
     },
     select: { id: true, position: true, name: true },
@@ -78,7 +82,11 @@ export async function formCreate(
 export async function formList({ tableId }: TableParams) {
   const forms = await prisma.form.findMany({
     where: {
-      table: { id: tableId, deletedAt: null, organization: { deletedAt: null } },
+      table: {
+        id: tableId,
+        deletedAt: null,
+        organization: { deletedAt: null },
+      },
       deletedAt: null,
     },
     select: {
@@ -142,7 +150,10 @@ export async function formGet({ tableId, formId }: FormParams) {
   return v.parse(FormGetOutput, form);
 }
 
-export async function formUpdate({ tableId, formId }: FormParams, input: FormUpdateInput) {
+export async function formUpdate(
+  { tableId, formId }: FormParams,
+  input: FormUpdateInput
+) {
   const form: FormInput = await prisma.form.update({
     where: {
       tableId_id: { tableId, id: formId },

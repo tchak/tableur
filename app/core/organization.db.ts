@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { prisma } from '../services/db';
+import { prisma } from '~/services/db';
 
 import { FormPathOutput, type FormPathInput } from './form.types';
 import type {
@@ -11,7 +11,7 @@ import type {
 import { DeletedOutput, type DeletedInput } from './types';
 
 export async function organizationCreate(
-  input: OrganizationCreateInput,
+  input: OrganizationCreateInput
 ): Promise<OrganizationJSON> {
   return prisma.organization.create({
     data: input,
@@ -19,7 +19,9 @@ export async function organizationCreate(
   });
 }
 
-export async function organizationDelete({ organizationId }: OrganizationParams) {
+export async function organizationDelete({
+  organizationId,
+}: OrganizationParams) {
   const organization: DeletedInput = await prisma.organization.update({
     where: { id: organizationId, deletedAt: null },
     data: { deletedAt: new Date() },
@@ -30,7 +32,7 @@ export async function organizationDelete({ organizationId }: OrganizationParams)
 
 export async function organizationUpdate(
   { organizationId }: OrganizationParams,
-  input: OrganizationUpdateInput,
+  input: OrganizationUpdateInput
 ): Promise<void> {
   await prisma.organization.update({
     where: { id: organizationId, deletedAt: null },
@@ -72,7 +74,9 @@ export async function organizationList(): Promise<OrganizationJSON[]> {
   });
 }
 
-export async function organizationPathList({ organizationId }: OrganizationParams) {
+export async function organizationPathList({
+  organizationId,
+}: OrganizationParams) {
   const paths: FormPathInput[] = await prisma.formPath.findMany({
     where: { organization: { id: organizationId, deletedAt: null } },
     take: 100,

@@ -6,7 +6,7 @@ import { requestId } from 'hono/request-id';
 import { timing } from 'hono/timing';
 import { createHonoServer } from 'react-router-hono-server/bun';
 
-import { router } from '../services/storage';
+import { router } from '~/services/storage';
 import { api } from './api';
 
 export default await createHonoServer({
