@@ -1,25 +1,45 @@
 import { parseStream } from 'fast-csv';
-import { Readable } from 'node:stream';
+import { Readable } from 'stream';
+import type { ReadableStream as NodeReadableStream } from 'stream/web';
 
 import { prisma } from '../services/db';
-import { storage } from '../services/storage';
+import {
+  deleteFile,
+  readFile,
+  writeFile,
+  type BytesStream,
+} from '../services/storage';
 
-import type { ColumnImport, ImportPreviewInput, ImportPreviewJSON } from './import.types';
+import type {
+  ColumnImport,
+  ImportPreviewInput,
+  ImportPreviewJSON,
+} from './import.types';
 import { detectType, parseStringValue } from './import.types';
 import type { OrganizationParams } from './organization.types';
 import { tableCreate } from './table.db';
-import type { TableImportDataInput, TableImportInput, TableParams } from './table.types';
+import type {
+  TableImportDataInput,
+  TableImportInput,
+  TableParams,
+} from './table.types';
 import type { Data } from './types';
 
 export async function importPreview(input: ImportPreviewInput) {
   const [stream1, stream2] = input.file.stream().tee();
   const preview = await parseImportPreview(stream1);
-  const { id } = await prisma.importPreview.create({ data: preview, select: { id: true } });
-  await storage.write(`import/${id}.csv`, stream2);
+  const { id } = await prisma.importPreview.create({
+    data: preview,
+    select: { id: true },
+  });
+  await writeFile(`import/${id}.csv`, stream2);
   return { id, ...preview };
 }
 
-export async function tableImport({ organizationId }: OrganizationParams, input: TableImportInput) {
+export async function tableImport(
+  { organizationId }: OrganizationParams,
+  input: TableImportInput
+) {
   const preview = await prisma.importPreview.findUniqueOrThrow({
     where: { id: input.importId },
     select: { columns: true },
@@ -42,19 +62,35 @@ export async function tableImport({ organizationId }: OrganizationParams, input:
       position: position + 1,
     })),
   });
-  await tableImportData({ tableId: table.id }, { importId: input.importId, mapping });
+  await tableImportData(
+    { tableId: table.id },
+    { importId: input.importId, mapping }
+  );
   return table;
 }
 
-export async function tableImportData({ tableId }: TableParams, input: TableImportDataInput) {
-  await prisma.importPreview.findUniqueOrThrow({ where: { id: input.importId } });
+export async function tableImportData(
+  { tableId }: TableParams,
+  input: TableImportDataInput
+) {
+  await prisma.importPreview.findUniqueOrThrow({
+    where: { id: input.importId },
+  });
   const tableColumns = await prisma.column.findMany({
-    where: { table: { id: tableId, deletedAt: null, organization: { deletedAt: null } } },
+    where: {
+      table: {
+        id: tableId,
+        deletedAt: null,
+        organization: { deletedAt: null },
+      },
+    },
     orderBy: { position: 'asc' },
     select: { id: true, type: true },
   });
   const headers = Object.fromEntries(
-    Object.entries(input.mapping).map(([header, columnId]) => [columnId, header] as const),
+    Object.entries(input.mapping).map(
+      ([header, columnId]) => [columnId, header] as const
+    )
   );
   const columns: (ColumnImport & { id: string })[] = [];
   for (const { id, type } of tableColumns) {
@@ -64,7 +100,7 @@ export async function tableImportData({ tableId }: TableParams, input: TableImpo
     }
   }
   const path = `import/${input.importId}.csv`;
-  const stream = await storage.read(path);
+  const stream = await readFile(path);
   const data = await parseImportData(stream, columns);
 
   if (data.length > 0) {
@@ -77,22 +113,26 @@ export async function tableImportData({ tableId }: TableParams, input: TableImpo
       });
       const lastRowNumber = sequence.lastRowNumber - data.length + 1;
       await tx.row.createMany({
-        data: data.map((data, position) => ({ data, tableId, number: lastRowNumber + position })),
+        data: data.map((data, position) => ({
+          data,
+          tableId,
+          number: lastRowNumber + position,
+        })),
       });
     });
   }
-  await storage.deleteFile(path);
+  await deleteFile(path);
   await prisma.importPreview.delete({ where: { id: input.importId } });
   return { rows: data.length };
 }
 
-async function parseImportPreview<T>(stream: ReadableStream<T>) {
+async function parseImportPreview(stream: BytesStream) {
   const [stream1, stream2] = stream.tee();
-  const delimiter = await guessCsvSeparator(stream1);
+  const delimiter = await guessCSVSeparator(stream1);
   return new Promise<Omit<ImportPreviewJSON, 'id'>>((resolve, reject) => {
     let columns: ImportPreviewJSON['columns'] = [];
     const rows: ImportPreviewJSON['rows'] = [];
-    parseStream(Readable.fromWeb(stream2), {
+    parseStream(Readable.fromWeb(stream2 as unknown as NodeReadableStream), {
       delimiter,
       maxRows: 10,
       trim: true,
@@ -112,7 +152,7 @@ async function parseImportPreview<T>(stream: ReadableStream<T>) {
       })
       .on('end', () => {
         const columnValues = columns.map(
-          (column, index) => [column, rows.map((row) => row.at(index))] as const,
+          (column, index) => [column, rows.map((row) => row.at(index))] as const
         );
         for (const [column, values] of columnValues) {
           const value = values.at(0);
@@ -126,10 +166,13 @@ async function parseImportPreview<T>(stream: ReadableStream<T>) {
   });
 }
 
-function parseImportData(stream: Readable, columns: (ColumnImport & { id: string })[]) {
+async function parseImportData(
+  stream: BytesStream,
+  columns: (ColumnImport & { id: string })[]
+) {
   return new Promise<Data[]>((resolve, reject) => {
     const rows: Data[] = [];
-    parseStream(stream, {
+    parseStream(Readable.fromWeb(stream as unknown as NodeReadableStream), {
       trim: true,
       discardUnmappedColumns: true,
       ignoreEmpty: true,
@@ -150,37 +193,33 @@ function parseImportData(stream: Readable, columns: (ColumnImport & { id: string
   });
 }
 
-export async function guessCsvSeparator<T>(stream: ReadableStream<T>): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const candidates = [',', ';', '\t', '|'];
-    const lineLimit = 10; // How many lines we use for guessing
-    const buffer: string[] = [];
-    let leftover = '';
-    const readable = Readable.fromWeb(stream);
+export async function guessCSVSeparator(stream: BytesStream): Promise<string> {
+  const candidates = [',', ';', '\t', '|'];
+  const lineLimit = 10; // How many lines we use for guessing
+  let buffer: string[] = [];
+  let leftover = '';
+  const decoder = new TextDecoderStream();
+  const reader = stream.pipeThrough(decoder).getReader();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
 
-    readable.setEncoding('utf-8');
-    readable
-      .on('data', (chunk: string) => {
-        leftover += chunk;
-        const lines = leftover.split(/\r?\n/);
-        leftover = lines.pop() || '';
+    leftover += value;
+    const lines = leftover.split(/\r?\n/);
+    leftover = lines.pop() || '';
 
-        buffer.push(...lines);
+    buffer.push(...lines);
 
-        if (buffer.length >= lineLimit) {
-          readable.destroy(); // Stop reading more
-          resolve(guessFromLines(buffer.slice(0, lineLimit), candidates));
-        }
-      })
-      .on('end', () => {
-        if (buffer.length) {
-          resolve(guessFromLines(buffer, candidates));
-        } else {
-          resolve(',');
-        }
-      })
-      .on('error', (err) => reject(err));
-  });
+    if (buffer.length >= lineLimit) {
+      buffer = buffer.slice(0, lineLimit);
+      reader.cancel();
+    }
+  }
+  if (buffer.length) {
+    return guessFromLines(buffer, candidates);
+  } else {
+    return ',';
+  }
 }
 
 function guessFromLines(lines: string[], candidates: string[]): string {

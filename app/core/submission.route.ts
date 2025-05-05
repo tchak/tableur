@@ -28,6 +28,7 @@ submissions.get(
     description: 'List submissions',
     responses: {
       200: {
+        description: '',
         content: {
           'application/json': {
             schema: resolver(SubmissionListJSON),
@@ -40,7 +41,7 @@ submissions.get(
   async (c) => {
     const data = await submissionList();
     return c.json({ data, meta: { total: data.length } });
-  },
+  }
 );
 
 submission.get(
@@ -49,6 +50,7 @@ submission.get(
     description: 'Get submission',
     responses: {
       200: {
+        description: '',
         content: {
           'application/json': {
             schema: resolver(SubmissionGetJSON),
@@ -63,7 +65,7 @@ submission.get(
     const params = c.req.valid('param');
     const data = await submissionGet(params).catch(handlePrismaError);
     return c.json({ data });
-  },
+  }
 );
 
 submission.delete('/', validator('param', SubmissionParams), async (c) => {

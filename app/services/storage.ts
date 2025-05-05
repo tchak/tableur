@@ -1,10 +1,18 @@
-import { FileStorage, type TemporaryUrlOptions } from '@flystorage/file-storage';
-import { LocalStorageAdapter, type LocalTemporaryUrlGenerator } from '@flystorage/local-fs';
+import {
+  FileStorage,
+  type TemporaryUrlOptions,
+  type WriteOptions,
+} from '@flystorage/file-storage';
+import {
+  LocalStorageAdapter,
+  type LocalTemporaryUrlGenerator,
+} from '@flystorage/local-fs';
 import { defaults, seal, unseal } from '@hapi/iron';
 import { vValidator as validator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
 import { stream } from 'hono/streaming';
-import { Readable } from 'node:stream';
+import { Readable } from 'stream';
+import type { ReadableStream as NodeReadableStream } from 'stream/web';
 import * as v from 'valibot';
 
 import { prisma } from './db';
@@ -17,14 +25,23 @@ const temporaryUrlGenerator: LocalTemporaryUrlGenerator = {
       typeof options.expiresAt === 'number'
         ? options.expiresAt
         : options.expiresAt.getMilliseconds();
-    const secret = await seal(path, env.STORAGE_SECRET_KEY, { ...defaults, ttl });
+    const secret = await seal(path, env.STORAGE_SECRET_KEY, {
+      ...defaults,
+      ttl,
+    });
     const url = new URL(path, options.baseUrl || env.STORAGE_HOSTNAME);
     url.searchParams.set('secret', secret);
     return url.toString();
   },
 };
-export const storage = new FileStorage(
-  new LocalStorageAdapter(rootDirectory, undefined, undefined, undefined, temporaryUrlGenerator),
+const storage = new FileStorage(
+  new LocalStorageAdapter(
+    rootDirectory,
+    undefined,
+    undefined,
+    undefined,
+    temporaryUrlGenerator
+  )
 );
 
 const FileInfo = v.object({
@@ -44,16 +61,20 @@ router.get(
   async (c) => {
     const params = c.req.valid('param');
     const query = c.req.valid('query');
-    const secretPath = await unseal(query.secret, env.STORAGE_SECRET_KEY, defaults);
+    const secretPath = await unseal(
+      query.secret,
+      env.STORAGE_SECRET_KEY,
+      defaults
+    );
     const path = pathFor(params);
     if (path == secretPath) {
       return stream(c, async (stream) => {
-        const readable = await storage.read(path);
-        await stream.pipe(Readable.toWeb(readable));
+        const readable = await readFile(path);
+        await stream.pipe(readable);
       });
     }
     return c.body('Unauthorized', 401);
-  },
+  }
 );
 router.put(
   ':key/:filename',
@@ -62,45 +83,74 @@ router.put(
   async (c) => {
     const params = c.req.valid('param');
     const query = c.req.valid('query');
-    const secretPath = await unseal(query.secret, env.STORAGE_SECRET_KEY, defaults);
+    const secretPath = await unseal(
+      query.secret,
+      env.STORAGE_SECRET_KEY,
+      defaults
+    );
     const path = pathFor(params);
     if (path == secretPath) {
       const file = await c.req.blob();
-      await storage.write(path, file.stream());
+      await writeFile(path, file.stream());
       return c.body(null, 204);
     }
     return c.body('Unauthorized', 401);
-  },
+  }
 );
 router.post('/', validator('json', FileInfo), async (c) => {
   const fileInfo = c.req.valid('json');
   const { blobId } = await createBlob(fileInfo);
-  return c.json({ blobId, url: await url(blobId, { expiresAt: 1000 * 60 * 10 }) }, { status: 201 });
+  return c.json(
+    { blobId, url: await url(blobId, { expiresAt: 1000 * 60 * 10 }) },
+    { status: 201 }
+  );
 });
 
 export { router };
 
+export type BytesStream = ReadableStream<Uint8Array<ArrayBufferLike>>;
+
 export function createFile(
-  parts: Bun.BlobPart[],
+  parts: BlobPart[],
   filename: string,
-  mimeType: string,
+  mimeType: string
 ): [file: File, info: FileInfo] {
   const file = new File(parts, filename, { type: mimeType });
   const info = getFileInfo(file);
   return [file, info];
 }
 
+export async function readFile(path: string): Promise<BytesStream> {
+  const stream = await storage.read(path);
+  return Readable.toWeb(stream) as unknown as BytesStream;
+}
+
+export async function writeFile(
+  path: string,
+  stream: BytesStream,
+  options?: WriteOptions
+) {
+  await storage.write(
+    path,
+    Readable.fromWeb(stream as unknown as NodeReadableStream),
+    options
+  );
+}
+
+export async function deleteFile(path: string) {
+  await storage.deleteFile(path);
+}
+
 export async function upload(file: File) {
   const fileInfo = getFileInfo(file);
   const { path, blobId } = await createBlob(fileInfo);
-  await storage.write(path, file.stream(), fileInfo);
+  await writeFile(path, file.stream(), fileInfo);
   return blobId;
 }
 
-export async function download(blobId: string): Promise<ReadableStream<Uint8Array>> {
+export async function download(blobId: string): Promise<BytesStream> {
   const path = await getPath(blobId);
-  const stream = await storage.read(path);
-  return Readable.toWeb(stream);
+  return readFile(path);
 }
 
 export async function url(blobId: string, options: TemporaryUrlOptions) {
@@ -148,7 +198,12 @@ async function createBlob(fileInfo: FileInfo) {
 async function deleteBlob(blobId: string) {
   const blob = await prisma.fileStorageBlob.findUnique({
     where: { id: blobId },
-    select: { id: true, key: true, filename: true, _count: { select: { attachments: true } } },
+    select: {
+      id: true,
+      key: true,
+      filename: true,
+      _count: { select: { attachments: true } },
+    },
   });
   if (blob?._count.attachments == 0) {
     const path = pathFor(blob);

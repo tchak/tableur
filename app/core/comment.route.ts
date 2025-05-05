@@ -4,7 +4,11 @@ import { resolver, validator } from 'hono-openapi/valibot';
 
 import { env } from '../services/env';
 import { commentCreate, commentDelete, commentList } from './comment.db';
-import { CommentCreateInput, CommentListJSON, CommentParams } from './comment.types';
+import {
+  CommentCreateInput,
+  CommentListJSON,
+  CommentParams,
+} from './comment.types';
 import { handlePrismaError } from './error.types';
 import { RowParams } from './row.types';
 
@@ -17,6 +21,7 @@ comments.get(
     description: 'List comments',
     responses: {
       200: {
+        description: '',
         content: {
           'application/json': {
             schema: resolver(CommentListJSON),
@@ -31,7 +36,7 @@ comments.get(
     const params = c.req.valid('param');
     const data = await commentList(params);
     return c.json({ data, meta: { total: data.length } });
-  },
+  }
 );
 comments.post(
   '/',
@@ -42,7 +47,7 @@ comments.post(
     const input = c.req.valid('json');
     const data = await commentCreate(params, input).catch(handlePrismaError);
     return c.json({ data }, { status: 201 });
-  },
+  }
 );
 
 comment.delete('/', validator('param', CommentParams), async (c) => {

@@ -1,28 +1,33 @@
 import { Scalar } from '@scalar/hono-api-reference';
 import { generateSpecs, openAPISpecs } from 'hono-openapi';
 import { showRoutes } from 'hono/dev';
-import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
+import { requestId } from 'hono/request-id';
 import { timing } from 'hono/timing';
+import { createHonoServer } from 'react-router-hono-server/bun';
 
-import { start } from '../services/boss';
-import { env } from '../services/env';
-import { app } from './app';
+import { router } from '../services/storage';
+import { api } from './api';
 
-app.get('/openapi', openAPISpecs(app));
-app.get('/api/docs', Scalar({ theme: 'saturn', url: '/openapi' }));
+export default await createHonoServer({
+  configure(app) {
+    app.route('api/v1', api);
+    app.route('storage', router);
 
-await start();
+    app.get('api/schema', openAPISpecs(app));
+    app.get('api/docs', Scalar({ theme: 'saturn', url: '/api/schema' }));
 
-app.use(logger());
-app.use(timing());
+    if (import.meta.env.MODE == 'development') {
+      app.use(prettyJSON());
 
-if (env.NODE_ENV == 'development') {
-  app.use(prettyJSON());
-  generateSpecs(app).then((spec) => {
-    Bun.write('openapi.json', JSON.stringify(spec, null, 2));
-  });
-  showRoutes(app);
-}
-
-export default app;
+      generateSpecs(app).then((spec) => {
+        Bun.write('openapi.json', JSON.stringify(spec, null, 2));
+      });
+      showRoutes(app);
+    }
+  },
+  beforeAll(app) {
+    app.use(timing());
+    app.use(requestId());
+  },
+});

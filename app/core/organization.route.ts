@@ -29,6 +29,7 @@ organizations.get(
     description: 'List organizations',
     responses: {
       200: {
+        description: '',
         content: {
           'application/json': {
             schema: resolver(OrganizationListJSON),
@@ -41,14 +42,18 @@ organizations.get(
   async (c) => {
     const data = await organizationList();
     return c.json({ data, meta: { total: data.length } });
-  },
+  }
 );
-organizations.post('/', validator('json', OrganizationCreateInput), async (c) => {
-  const input = c.req.valid('json');
-  const data = await organizationCreate(input);
-  c.header('Location', `/api/v1/organizations/${data.id}`);
-  return c.json({ data }, { status: 201 });
-});
+organizations.post(
+  '/',
+  validator('json', OrganizationCreateInput),
+  async (c) => {
+    const input = c.req.valid('json');
+    const data = await organizationCreate(input);
+    c.header('Location', `/api/v1/organizations/${data.id}`);
+    return c.json({ data }, { status: 201 });
+  }
+);
 
 organization.get(
   '/',
@@ -56,6 +61,7 @@ organization.get(
     description: 'Get organization',
     responses: {
       200: {
+        description: '',
         content: {
           'application/json': {
             schema: resolver(OrganizationGetJSON),
@@ -70,7 +76,7 @@ organization.get(
     const params = c.req.valid('param');
     const data = await organizationGet(params).catch(handlePrismaError);
     return c.json({ data });
-  },
+  }
 );
 organization.patch(
   '/',
@@ -81,17 +87,21 @@ organization.patch(
     const input = c.req.valid('json');
     await organizationUpdate(params, input).catch(handlePrismaError);
     return c.body(null, { status: 204 });
-  },
+  }
 );
 organization.delete('/', validator('param', OrganizationParams), async (c) => {
   const params = c.req.valid('param');
   const data = await organizationDelete(params).catch(handlePrismaError);
   return c.json({ data });
 });
-organization.get('/paths', validator('param', OrganizationParams), async (c) => {
-  const params = c.req.valid('param');
-  const data = await organizationPathList(params);
-  return c.json({ data });
-});
+organization.get(
+  '/paths',
+  validator('param', OrganizationParams),
+  async (c) => {
+    const params = c.req.valid('param');
+    const data = await organizationPathList(params);
+    return c.json({ data });
+  }
+);
 
 export { organization, organizations };

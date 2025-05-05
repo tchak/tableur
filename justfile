@@ -4,11 +4,15 @@ default: dev
 
 [group('dev')]
 dev:
-  bun -b ./app/server/index.ts
+  PORT=8080 bun -b vite
 
 [group('prod')]
 start:
-  bun -b ./app/server/index.ts
+  bun ./build/server/index.js
+
+[group('dev')]
+build:
+  bun -b react-router build
 
 [group('dev')]
 install:
@@ -18,14 +22,15 @@ install:
 setup: install lint test-ci db-push-dev
 
 [group('lint')]
-lint: tsc eslint prisma-validate
+lint: typecheck eslint prisma-validate
 
 [group('lint')]
 eslint:
   bun -b eslint .
 
 [group('lint')]
-tsc:
+typecheck:
+  react-router typegen
   bun -b tsc
 
 [group('lint')]

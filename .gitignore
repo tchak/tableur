@@ -144,3 +144,7 @@ storage
 
 # OpenAPI
 openapi.json
+
+# React Router
+/.react-router/
+/build/
