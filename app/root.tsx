@@ -5,19 +5,16 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useNavigate,
-  useHref,
 } from 'react-router';
-import { HeroUIProvider, ToastProvider } from '@heroui/react';
 import type { ReactNode } from 'react';
 
+import { UIProvider } from '~/components/ui/provider';
 import type { Route } from './+types/root';
 import './app.css';
 
 export const links: Route.LinksFunction = () => [];
 
 export function Layout({ children }: { children: ReactNode }) {
-  const navigate = useNavigate();
   const locale = 'en';
 
   return (
@@ -29,15 +26,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <Links />
       </head>
       <body>
-        <HeroUIProvider
-          locale={locale}
-          navigate={navigate}
-          useHref={useHref}
-          reducedMotion="user"
-        >
-          <ToastProvider />
-          {children}
-        </HeroUIProvider>
+        <UIProvider locale={locale}>{children}</UIProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -66,11 +55,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
+    <main className="container mx-auto p-4 pt-16">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+        <pre className="w-full overflow-x-auto p-4">
           <code>{stack}</code>
         </pre>
       )}
