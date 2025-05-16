@@ -39,8 +39,7 @@ export async function submissionGet({
       where: {
         id: submissionId,
         deletedAt: null,
-        form: { deletedAt: null },
-        table: { deletedAt: null, organization: { deletedAt: null } },
+        form: { deletedAt: null, table: { deletedAt: null } },
       },
       select: {
         id: true,
@@ -80,7 +79,6 @@ export async function submissionStart(
       data: {
         number: sequence.lastRowNumber,
         formId: form.id,
-        tableId: form.tableId,
         users: { create: { userId } },
       },
       select: {
@@ -97,27 +95,31 @@ export async function submissionStart(
 export async function submissionSubmit({
   submissionId,
 }: SubmissionParams): Promise<SubmissionJSON> {
-  const row = await prisma.submission.findUniqueOrThrow({
+  const { number, form } = await prisma.submission.findUniqueOrThrow({
     where: {
       id: submissionId,
       deletedAt: null,
-      form: { deletedAt: null },
-      table: { deletedAt: null, organization: { deletedAt: null } },
+      form: {
+        deletedAt: null,
+        table: { deletedAt: null, organization: { deletedAt: null } },
+      },
     },
-    select: { number: true, tableId: true },
+    select: { number: true, form: { select: { tableId: true } } },
   });
   const submittedAt = new Date();
   const submission = await prisma.submission.update({
     where: {
       id: submissionId,
       deletedAt: null,
-      form: { deletedAt: null },
-      table: { deletedAt: null, organization: { deletedAt: null } },
+      form: {
+        deletedAt: null,
+        table: { deletedAt: null, organization: { deletedAt: null } },
+      },
     },
     data: {
       state: 'submitted',
       submittedAt,
-      row: { create: row },
+      row: { create: { number, tableId: form.tableId } },
     },
     select: {
       id: true,
@@ -138,8 +140,10 @@ export async function submissionDelete({ submissionId }: SubmissionParams) {
     where: {
       id: submissionId,
       deletedAt: null,
-      form: { deletedAt: null },
-      table: { deletedAt: null, organization: { deletedAt: null } },
+      form: {
+        deletedAt: null,
+        table: { deletedAt: null, organization: { deletedAt: null } },
+      },
     },
     data: { deletedAt: new Date() },
     select: { id: true, deletedAt: true },

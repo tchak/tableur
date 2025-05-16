@@ -20,7 +20,6 @@ organizations.route(':organizationId', organization);
 
 comments.route(':commentId', comment);
 submissions.route(':submissionId', submission);
-forms.route(':formId', form);
 
 row.route('comments', comments);
 rows.route(':rowId', row);
@@ -30,6 +29,7 @@ table.route('forms', forms);
 
 api.route('organizations', organizations);
 api.route('tables/:tableId', table);
+api.route('forms/:formId', form);
 api.route('imports', imports);
 api.route('submissions', submissions);
 api.route('start', start);

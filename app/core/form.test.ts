@@ -49,10 +49,7 @@ describe('api/v1/tables/:id/forms', () => {
   });
 
   it('should return a form', async () => {
-    const response = await app.request(
-      `/api/v1/tables/${tableId}/forms/${formId}`,
-      { headers },
-    );
+    const response = await app.request(`/api/v1/forms/${formId}`, { headers });
     expect(response.status).toBe(200);
     const data = await response.json();
     const { data: form } = v.parse(FormGetJSON, data);
@@ -102,35 +99,28 @@ describe('api/v1/tables/:id/forms', () => {
   });
 
   it('should delete a form', async () => {
-    const response = await app.request(
-      `/api/v1/tables/${tableId}/forms/${formId}`,
-      {
-        method: 'DELETE',
-        headers,
-      },
-    );
+    const response = await app.request(`/api/v1/forms/${formId}`, {
+      method: 'DELETE',
+      headers,
+    });
     expect(response.status).toBe(200);
 
     {
-      const response = await app.request(
-        `/api/v1/tables/${tableId}/forms/${formId}`,
-        { headers },
-      );
-      expect(response.status).toBe(404);
+      const response = await app.request(`/api/v1/forms/${formId}`, {
+        headers,
+      });
+      expect(response.status).toBe(403);
     }
   });
 
   it('should update a form', async () => {
-    const response = await app.request(
-      `/api/v1/tables/${tableId}/forms/${formId}`,
-      {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json', ...headers },
-        body: JSON.stringify({
-          name: 'Hello World!',
-        }),
-      },
-    );
+    const response = await app.request(`/api/v1/forms/${formId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: JSON.stringify({
+        name: 'Hello World!',
+      }),
+    });
     expect(response.status).toBe(200);
   });
 });

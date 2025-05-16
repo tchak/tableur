@@ -14,7 +14,7 @@ import { DeletedOutput, type DeletedInput } from './types';
 
 export async function formCreate(
   { tableId }: TableParams,
-  { title, path, ...input }: FormCreateInput
+  { title, path, ...input }: FormCreateInput,
 ) {
   const columns = await prisma.column.findMany({
     where: {
@@ -35,7 +35,6 @@ export async function formCreate(
   const form: FormInput = await prisma.form.create({
     data: {
       tableId,
-      id: crypto.randomUUID(),
       ...input,
       paths: {
         connectOrCreate: {
@@ -56,6 +55,7 @@ export async function formCreate(
                 createMany: {
                   data: columns.map((column) => ({
                     id: column.id,
+                    tableId,
                     label: column.name,
                     position: column.position,
                     required: true,
@@ -101,13 +101,9 @@ export async function formList({ tableId }: TableParams) {
   return v.parse(v.array(FormOutput), forms);
 }
 
-export async function formGet({ tableId, formId }: FormParams) {
+export async function formGet({ formId }: FormParams) {
   const form: FormGetInput = await prisma.form.findUniqueOrThrow({
-    where: {
-      tableId_id: { tableId, id: formId },
-      table: { deletedAt: null, organization: { deletedAt: null } },
-      deletedAt: null,
-    },
+    where: { id: formId, deletedAt: null },
     select: {
       id: true,
       name: true,
@@ -151,15 +147,11 @@ export async function formGet({ tableId, formId }: FormParams) {
 }
 
 export async function formUpdate(
-  { tableId, formId }: FormParams,
-  input: FormUpdateInput
+  { formId }: FormParams,
+  input: FormUpdateInput,
 ) {
   const form: FormInput = await prisma.form.update({
-    where: {
-      tableId_id: { tableId, id: formId },
-      table: { deletedAt: null, organization: { deletedAt: null } },
-      deletedAt: null,
-    },
+    where: { id: formId, deletedAt: null },
     data: { ...input },
     select: {
       id: true,
@@ -173,13 +165,9 @@ export async function formUpdate(
   return v.parse(FormOutput, form);
 }
 
-export async function formDelete({ tableId, formId }: FormParams) {
+export async function formDelete({ formId }: FormParams) {
   const form: DeletedInput = await prisma.form.update({
-    where: {
-      tableId_id: { tableId, id: formId },
-      table: { deletedAt: null, organization: { deletedAt: null } },
-      deletedAt: null,
-    },
+    where: { id: formId, deletedAt: null },
     data: { deletedAt: new Date() },
     select: { id: true, deletedAt: true },
   });

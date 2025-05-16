@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
 
+import { auth, canAccess, checkForm } from '~/services/auth';
 import { env } from '~/services/env';
 import { handlePrismaError } from './error.types';
 import {
@@ -55,12 +56,13 @@ forms
       const params = c.req.valid('param');
       const input = c.req.valid('json');
       const data = await formCreate(params, input);
-      c.header('Location', `/api/v1/tables/${params.tableId}/forms/${data.id}`);
+      c.header('Location', `/api/v1/forms/${data.id}`);
       return c.json({ data }, { status: 201 });
     },
   );
 
 form
+  .use(auth, canAccess(checkForm))
   .get(
     '/',
     describeRoute({

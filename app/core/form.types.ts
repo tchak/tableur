@@ -4,7 +4,12 @@ import { Expression } from './expression';
 import { Description, ID, ISOTimestamp, Name, Timestamp } from './types';
 
 export const FormCreateInput = v.object({
-  path: v.pipe(v.string(), v.minLength(4), v.maxLength(255), v.regex(/^[a-z0-9_-]+$/)),
+  path: v.pipe(
+    v.string(),
+    v.minLength(4),
+    v.maxLength(255),
+    v.regex(/^[a-z0-9_-]+$/),
+  ),
   name: Name,
   title: Name,
   description: v.optional(Description),
@@ -20,7 +25,6 @@ export const FormUpdateInput = v.partial(
 export type FormUpdateInput = v.InferInput<typeof FormUpdateInput>;
 
 export const FormParams = v.object({
-  tableId: ID,
   formId: ID,
 });
 export type FormParams = v.InferOutput<typeof FormParams>;

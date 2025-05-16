@@ -24,6 +24,7 @@ export const auth = createMiddleware<Env>(async (c, next) => {
 interface AuthParams {
   organizationId?: string;
   tableId?: string;
+  formId?: string;
 }
 
 export const canAccess = (
@@ -56,13 +57,31 @@ export async function checkOrganization(userId: string, params: AuthParams) {
 
 export async function checkTable(userId: string, params: AuthParams) {
   if (!params.tableId) {
-    throw new HTTPException(400, { message: 'Missing organizationId' });
+    throw new HTTPException(400, { message: 'Missing tableId' });
   }
   const ok = await prisma.table.findUnique({
     where: {
       id: params.tableId,
       deletedAt: null,
       organization: { deletedAt: null, users: { some: { userId } } },
+    },
+    select: { id: true },
+  });
+  return !!ok;
+}
+
+export async function checkForm(userId: string, params: AuthParams) {
+  if (!params.formId) {
+    throw new HTTPException(400, { message: 'Missing formId' });
+  }
+  const ok = await prisma.form.findUnique({
+    where: {
+      id: params.formId,
+      deletedAt: null,
+      table: {
+        deletedAt: null,
+        organization: { deletedAt: null, users: { some: { userId } } },
+      },
     },
     select: { id: true },
   });

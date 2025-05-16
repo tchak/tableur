@@ -187,11 +187,8 @@ model Table {
   columns      Column[]
   options      ChoiceOption[]
   rows         Row[]
-  submissions  Submission[]
 
   forms    Form[]
-  pages    FormPage[]
-  sections FormSection[]
   fields   FormField[]
 
   cells Cell[]
@@ -312,7 +309,7 @@ model Cell {
 }
 
 model Form {
-  id          String    @db.Uuid
+  id          String    @db.Uuid @id @default(uuid())
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
@@ -327,7 +324,6 @@ model Form {
   fields      FormField[]
   paths       FormPath[]
 
-  @@id([tableId, id])
   @@index([deletedAt])
   @@map("forms")
 }
@@ -337,15 +333,14 @@ model FormPath {
   path           String   @unique
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
-  tableId        String?  @map("table_id") @db.Uuid
   formId         String?  @map("form_id") @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  form         Form?        @relation(fields: [tableId, formId], references: [tableId, id], onDelete: Cascade)
+  form         Form?        @relation(fields: [formId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
-  @@index([tableId, formId])
+  @@index([formId])
   @@map("form_paths")
 }
 
@@ -354,16 +349,14 @@ model FormPage {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
-  tableId   String    @map("table_id") @db.Uuid
   formId    String    @map("form_id") @db.Uuid
   position  Float
   condition Json?
 
-  table    Table         @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  form     Form          @relation(fields: [tableId, formId], references: [tableId, id], onDelete: Cascade)
+  form     Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
   sections FormSection[]
 
-  @@id([tableId, formId, id])
+  @@id([formId, id])
   @@index([deletedAt])
   @@map("form_pages")
 }
@@ -373,7 +366,6 @@ model FormSection {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
-  tableId     String    @map("table_id") @db.Uuid
   formId      String    @map("form_id") @db.Uuid
   pageId      String    @map("page_id") @db.Uuid
   parentId    String?   @map("parent_id") @db.Uuid
@@ -382,14 +374,13 @@ model FormSection {
   description String?
   condition   Json?
 
-  table    Table         @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  form     Form          @relation(fields: [tableId, formId], references: [tableId, id], onDelete: Cascade)
-  page     FormPage      @relation(fields: [tableId, formId, pageId], references: [tableId, formId, id], onDelete: Cascade)
-  parent   FormSection?  @relation("section", fields: [tableId, formId, parentId], references: [tableId, formId, id], onDelete: Cascade)
+  form     Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
+  page     FormPage      @relation(fields: [formId, pageId], references: [formId, id], onDelete: Cascade)
+  parent   FormSection?  @relation("section", fields: [formId, parentId], references: [formId, id], onDelete: Cascade)
   sections FormSection[] @relation("section")
   fields   FormField[]
 
-  @@id([tableId, formId, id])
+  @@id([formId, id])
   @@index([deletedAt])
   @@map("form_sections")
 }
@@ -409,11 +400,11 @@ model FormField {
   condition   Json?
 
   table   Table       @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  form    Form        @relation(fields: [tableId, formId], references: [tableId, id], onDelete: Cascade)
-  section FormSection @relation(fields: [tableId, formId, sectionId], references: [tableId, formId, id], onDelete: Cascade)
+  form    Form        @relation(fields: [formId], references: [id], onDelete: Cascade)
+  section FormSection @relation(fields: [formId, sectionId], references: [formId, id], onDelete: Cascade)
   column  Column      @relation(fields: [tableId, id], references: [tableId, id], onDelete: Cascade)
 
-  @@id([tableId, formId, id])
+  @@id([formId, id])
   @@index([deletedAt])
   @@map("form_fields")
 }
@@ -432,17 +423,17 @@ model Submission {
   deletedAt   DateTime?       @map("deleted_at")
   submittedAt DateTime?       @map("submitted_at")
   formId      String          @map("form_id") @db.Uuid
-  tableId     String          @map("table_id") @db.Uuid
   rowId       String?         @unique @map("row_id") @db.Uuid
   teamId      String?         @map("team_id") @db.Uuid
 
   users SubmissionMembership[]
-  table Table                  @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  form  Form                   @relation(fields: [tableId, formId], references: [tableId, id], onDelete: Cascade)
+  form  Form                   @relation(fields: [formId], references: [id], onDelete: Cascade)
   team  Team?                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
   row   Row?                   @relation(fields: [rowId], references: [id], onDelete: Cascade)
 
-  @@index([tableId, formId])
+  @@index([formId])
+  @@index([rowId])
+  @@index([teamId])
   @@index([deletedAt])
   @@map("submissions")
 }
