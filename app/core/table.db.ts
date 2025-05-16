@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import { prisma } from '~/services/db';
 
+import { prisma } from '~/services/db';
 import type { OrganizationParams } from './organization.types';
 import type {
   TableCreateInput,
@@ -66,7 +66,7 @@ export async function tableGet({ tableId }: TableParams) {
 
 export async function tableCreate(
   { organizationId }: OrganizationParams,
-  { columns, rows, ...data }: TableCreateInput
+  { columns, rows, ...data }: TableCreateInput,
 ) {
   return prisma.$transaction(async (tx) => {
     const sequence = await tx.organizationTableSequence.upsert({
@@ -118,7 +118,7 @@ export async function tableCreate(
 
 export async function tableUpdate(
   { tableId }: TableParams,
-  input: TableUpdateInput
+  input: TableUpdateInput,
 ): Promise<void> {
   await prisma.table.update({
     where: { id: tableId, organization: { deletedAt: null }, deletedAt: null },

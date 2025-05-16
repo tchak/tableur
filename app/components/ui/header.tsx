@@ -19,7 +19,13 @@ export interface HeaderItem {
   href: string;
 }
 
-export function Header({ items }: { items: HeaderItem[] }) {
+export function Header({
+  items,
+  user,
+}: {
+  items: HeaderItem[];
+  user?: { email: string } | null;
+}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const pages = useMemo(
@@ -63,9 +69,15 @@ export function Header({ items }: { items: HeaderItem[] }) {
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <Button as={Link} href="/login" variant="flat">
-            Sign In
-          </Button>
+          {user ? (
+            <Button as={Link} href="/account" variant="flat">
+              {user.email}
+            </Button>
+          ) : (
+            <Button as={Link} href="/login" variant="flat">
+              Sign In
+            </Button>
+          )}
         </NavbarItem>
       </NavbarContent>
       <NavbarMenu>

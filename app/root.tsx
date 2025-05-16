@@ -11,7 +11,9 @@ import type { ReactNode } from 'react';
 import { UIProvider } from '~/components/ui/provider';
 import type { Route } from './+types/root';
 import './app.css';
+import { sessionMiddleware } from '~/middleware/session';
 
+export const unstable_middleware = [sessionMiddleware];
 export const links: Route.LinksFunction = () => [];
 
 export function Layout({ children }: { children: ReactNode }) {

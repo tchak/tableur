@@ -2,34 +2,47 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
+import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { formCreate } from './form.db';
 import { organizationCreate } from './organization.db';
 import { submissionStart } from './submission.db';
 import { SubmissionGetJSON, SubmissionListJSON } from './submission.types';
 import { tableCreate } from './table.db';
+import { userCreate } from './user.db';
 
 describe('api/v1/submissions', () => {
   let submissionId: string;
+  let headers: Record<string, string>;
   beforeEach(async () => {
     await prisma.organization.deleteMany();
-    const organization = await organizationCreate({
-      name: 'Test Organization',
-    });
+    await prisma.user.deleteMany();
+    const user = await userCreate({ email: 'test@example.com' });
+    const organization = await organizationCreate(
+      { userId: user.id },
+      {
+        name: 'Test Organization',
+      },
+    );
     const table = await tableCreate(
       { organizationId: organization.id },
-      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] }
+      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] },
     );
     await formCreate(
       { tableId: table.id },
-      { name: 'Test Form', title: 'Test Section', path: 'test-form' }
+      { name: 'Test Form', title: 'Test Section', path: 'test-form' },
     );
-    const submission = await submissionStart({ path: 'test-form' });
+    const submission = await submissionStart(
+      { userId: user.id },
+      { path: 'test-form' },
+    );
     submissionId = submission.id;
+    const token = await createAuthToken(user.id);
+    headers = { Authorization: `Bearer ${token}` };
   });
 
   it('should return a list of submissions', async () => {
-    const response = await app.request(`/api/v1/submissions`);
+    const response = await app.request(`/api/v1/submissions`, { headers });
     expect(response.status).toBe(200);
     const data = await response.json();
     const { data: submissions } = v.parse(SubmissionListJSON, data);
@@ -47,6 +60,7 @@ describe('api/v1/submissions', () => {
   it('should start a submission', async () => {
     const response = await app.request(`/api/v1/start/test-form`, {
       method: 'POST',
+      headers,
     });
     expect(response.status).toBe(201);
     const data = await response.json();
@@ -56,7 +70,7 @@ describe('api/v1/submissions', () => {
     expect(submission.submittedAt).toBeNull();
 
     {
-      const response = await app.request(`/api/v1/submissions`);
+      const response = await app.request(`/api/v1/submissions`, { headers });
       expect(response.status).toBe(200);
       const data = await response.json();
       const { data: submission } = v.parse(SubmissionListJSON, data);

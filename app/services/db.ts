@@ -12,8 +12,18 @@ const ColumnType = v.picklist([
   'choiceList',
 ]);
 
-const ImportPreviewColumnType = v.picklist(['text', 'number', 'boolean', 'date', 'datetime']);
-const ImportPreviewColumns = v.array(v.object({ type: ImportPreviewColumnType, name: v.string() }));
+const SubmissionState = v.picklist(['draft', 'submitted']);
+
+const ImportPreviewColumnType = v.picklist([
+  'text',
+  'number',
+  'boolean',
+  'date',
+  'datetime',
+]);
+const ImportPreviewColumns = v.array(
+  v.object({ type: ImportPreviewColumnType, name: v.string() }),
+);
 const ImportPreviewRows = v.array(v.array(v.nullable(v.string())));
 
 const timestamps = {
@@ -34,12 +44,22 @@ const prisma = new PrismaClient().$extends({
     table: timestamps,
     row: timestamps,
     form: timestamps,
-    submission: timestamps,
+    submission: {
+      ...timestamps,
+      state: {
+        needs: { state: true },
+        compute: (result) => v.parse(SubmissionState, result.state),
+      },
+      submittedAt: {
+        needs: { submittedAt: true },
+        compute: (result) => result.submittedAt?.toISOString() ?? null,
+      },
+    },
     column: {
       ...timestamps,
       type: {
         needs: { type: true },
-        compute: (column) => v.parse(ColumnType, column.type),
+        compute: (result) => v.parse(ColumnType, result.type),
       },
     },
     importPreview: {

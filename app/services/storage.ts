@@ -15,6 +15,7 @@ import { Readable } from 'stream';
 import type { ReadableStream as NodeReadableStream } from 'stream/web';
 import * as v from 'valibot';
 
+import { FileInfo, getFileInfo } from '../utils';
 import { prisma } from './db';
 import { env } from './env';
 
@@ -43,14 +44,6 @@ const storage = new FileStorage(
     temporaryUrlGenerator
   )
 );
-
-const FileInfo = v.object({
-  filename: v.string(),
-  size: v.pipe(v.number(), v.integer(), v.minValue(0)),
-  mimeType: v.string(),
-  checksum: v.string(),
-});
-type FileInfo = v.InferOutput<typeof FileInfo>;
 
 const router = new Hono();
 
@@ -110,16 +103,6 @@ export { router };
 
 export type BytesStream = ReadableStream<Uint8Array<ArrayBufferLike>>;
 
-export function createFile(
-  parts: BlobPart[],
-  filename: string,
-  mimeType: string
-): [file: File, info: FileInfo] {
-  const file = new File(parts, filename, { type: mimeType });
-  const info = getFileInfo(file);
-  return [file, info];
-}
-
 export async function readFile(path: string): Promise<BytesStream> {
   const stream = await storage.read(path);
   return Readable.toWeb(stream) as unknown as BytesStream;
@@ -166,12 +149,6 @@ export async function remove(attachmentId: string) {
   await deleteBlob(blobId);
 }
 
-function checksum(blob: Blob | string) {
-  const hasher = new Bun.CryptoHasher('md5');
-  hasher.update(blob);
-  return hasher.digest('hex');
-}
-
 function pathFor({ key, filename }: { key: string; filename: string }) {
   return `${key}/${filename}`;
 }
@@ -210,13 +187,4 @@ async function deleteBlob(blobId: string) {
     await storage.deleteFile(path);
     await prisma.fileStorageBlob.delete({ where: { id: blob.id } });
   }
-}
-
-function getFileInfo(file: File): FileInfo {
-  return {
-    filename: file.name,
-    size: file.size,
-    mimeType: file.type,
-    checksum: checksum(file),
-  };
 }

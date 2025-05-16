@@ -2,30 +2,41 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
+import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { organizationCreate } from './organization.db';
 import { tableCreate } from './table.db';
 import { _TableJSON, TableGetJSON, TableListJSON } from './table.types';
+import { userCreate } from './user.db';
 
 describe('api/v1/tables', () => {
   let organizationId: string;
   let tableId: string;
+  let headers: Record<string, string>;
   beforeEach(async () => {
     await prisma.organization.deleteMany();
-    const organization = await organizationCreate({
-      name: 'Test Organization',
-    });
+    await prisma.user.deleteMany();
+    const user = await userCreate({ email: 'test@example.com' });
+    const organization = await organizationCreate(
+      { userId: user.id },
+      {
+        name: 'Test Organization',
+      },
+    );
     organizationId = organization.id;
     const table = await tableCreate(
       { organizationId },
-      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] }
+      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] },
     );
     tableId = table.id;
+    const token = await createAuthToken(user.id);
+    headers = { Authorization: `Bearer ${token}` };
   });
 
   it('should return a list of tables', async () => {
     const response = await app.request(
-      `/api/v1/organizations/${organizationId}/tables`
+      `/api/v1/organizations/${organizationId}/tables`,
+      { headers },
     );
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -34,7 +45,9 @@ describe('api/v1/tables', () => {
   });
 
   it('should return a table', async () => {
-    const response = await app.request(`/api/v1/tables/${tableId}`);
+    const response = await app.request(`/api/v1/tables/${tableId}`, {
+      headers,
+    });
     expect(response.status).toBe(200);
     const data = await response.json();
     const { data: table } = v.parse(TableGetJSON, data);
@@ -50,11 +63,11 @@ describe('api/v1/tables', () => {
       `/api/v1/organizations/${organizationId}/tables`,
       {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...headers },
         body: JSON.stringify({
           name: 'Hello World',
         }),
-      }
+      },
     );
     expect(response.status).toBe(201);
     const data = await response.json();
@@ -64,7 +77,8 @@ describe('api/v1/tables', () => {
 
     {
       const response = await app.request(
-        `/api/v1/organizations/${organizationId}/tables`
+        `/api/v1/organizations/${organizationId}/tables`,
+        { headers },
       );
       expect(response.status).toBe(200);
       const data = await response.json();
@@ -81,19 +95,22 @@ describe('api/v1/tables', () => {
   it('should delete a table', async () => {
     const response = await app.request(`/api/v1/tables/${tableId}`, {
       method: 'DELETE',
+      headers,
     });
     expect(response.status).toBe(200);
 
     {
-      const response = await app.request(`/api/v1/tables/${tableId}`);
-      expect(response.status).toBe(404);
+      const response = await app.request(`/api/v1/tables/${tableId}`, {
+        headers,
+      });
+      expect(response.status).toBe(403);
     }
   });
 
   it('should update a table', async () => {
     const response = await app.request(`/api/v1/tables/${tableId}`, {
       method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...headers },
       body: JSON.stringify({
         name: 'Hello World!',
       }),
@@ -104,6 +121,7 @@ describe('api/v1/tables', () => {
   it('should clone a table', async () => {
     const response = await app.request(`/api/v1/tables/${tableId}/clone`, {
       method: 'POST',
+      headers,
     });
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -113,7 +131,9 @@ describe('api/v1/tables', () => {
     const clonedTableId = table.id;
 
     {
-      const response = await app.request(`/api/v1/tables/${clonedTableId}`);
+      const response = await app.request(`/api/v1/tables/${clonedTableId}`, {
+        headers,
+      });
       expect(response.status).toBe(200);
       const data = await response.json();
       const { data: table } = v.parse(TableGetJSON, data);

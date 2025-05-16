@@ -2,21 +2,29 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
+import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { organizationCreate } from './organization.db';
 import { RowCreateJSON, RowGetJSON, RowListJSON } from './row.types';
 import { tableCreate } from './table.db';
+import { userCreate } from './user.db';
 
 describe('api/v1/tables/:id/rows', () => {
   let organizationId: string;
   let tableId: string;
   let columnId: string;
   let rowId: string;
+  let headers: Record<string, string>;
   beforeEach(async () => {
     await prisma.organization.deleteMany();
-    const organization = await organizationCreate({
-      name: 'Test Organization',
-    });
+    await prisma.user.deleteMany();
+    const user = await userCreate({ email: 'test@example.com' });
+    const organization = await organizationCreate(
+      { userId: user.id },
+      {
+        name: 'Test Organization',
+      },
+    );
     organizationId = organization.id;
     const table = await tableCreate(
       { organizationId },
@@ -24,15 +32,19 @@ describe('api/v1/tables/:id/rows', () => {
         name: 'Test Table',
         columns: [{ name: 'Test Column', type: 'text' }],
         rows: [{}],
-      }
+      },
     );
     tableId = table.id;
     rowId = (await prisma.row.findFirstOrThrow()).id;
     columnId = (await prisma.column.findFirstOrThrow()).id;
+    const token = await createAuthToken(user.id);
+    headers = { Authorization: `Bearer ${token}` };
   });
 
   it('should return a list of rows', async () => {
-    const response = await app.request(`/api/v1/tables/${tableId}/rows`);
+    const response = await app.request(`/api/v1/tables/${tableId}/rows`, {
+      headers,
+    });
     expect(response.status).toBe(200);
     const data = await response.json();
     const { data: rows } = v.parse(RowListJSON, data);
@@ -41,7 +53,8 @@ describe('api/v1/tables/:id/rows', () => {
 
   it('should return a row', async () => {
     const response = await app.request(
-      `/api/v1/tables/${tableId}/rows/${rowId}`
+      `/api/v1/tables/${tableId}/rows/${rowId}`,
+      { headers },
     );
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -57,7 +70,7 @@ describe('api/v1/tables/:id/rows', () => {
   it('should create a row', async () => {
     const response = await app.request(`/api/v1/tables/${tableId}/rows`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...headers },
       body: JSON.stringify({
         data: {
           [columnId]: {
@@ -76,7 +89,9 @@ describe('api/v1/tables/:id/rows', () => {
     expect(typedValue?.value).toEqual('test value');
 
     {
-      const response = await app.request(`/api/v1/tables/${tableId}/rows`);
+      const response = await app.request(`/api/v1/tables/${tableId}/rows`, {
+        headers,
+      });
       expect(response.status).toBe(200);
       const data = await response.json();
       const { data: rows } = v.parse(RowListJSON, data);
@@ -90,13 +105,15 @@ describe('api/v1/tables/:id/rows', () => {
       `/api/v1/tables/${tableId}/rows/${rowId}`,
       {
         method: 'DELETE',
-      }
+        headers,
+      },
     );
     expect(response.status).toBe(200);
 
     {
       const response = await app.request(
-        `/api/v1/tables/${tableId}/rows/${rowId}`
+        `/api/v1/tables/${tableId}/rows/${rowId}`,
+        { headers },
       );
       expect(response.status).toBe(404);
     }

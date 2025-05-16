@@ -9,6 +9,8 @@ export const env = createEnv({
     private: {
       DATABASE_URL: v.string(),
       STORAGE_SECRET_KEY: v.string(),
+      SESSION_SECRET_KEY: v.string(),
+      JWT_SECRET_KEY: v.string(),
       STORAGE_HOSTNAME: v.pipe(v.string(), v.url()),
       NODE_ENV: v.fallback(
         v.picklist(['development', 'production', 'test']),

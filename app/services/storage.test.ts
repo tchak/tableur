@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '../server/app';
+import { createFile } from '../utils';
 import { prisma } from './db';
 import * as storage from './storage';
 
@@ -12,7 +13,7 @@ describe('storage', () => {
   });
 
   it('upload file', async () => {
-    const [file] = storage.createFile(['Hello World'], 'test.txt', 'text/plain');
+    const [file] = createFile(['Hello World'], 'test.txt', 'text/plain');
     const blobId = await storage.upload(file);
     const blob = await prisma.fileStorageBlob.findFirstOrThrow();
     expect(blobId).toEqual(blob.id);
@@ -23,7 +24,7 @@ describe('storage', () => {
   });
 
   it('/storage', async () => {
-    const [file, info] = storage.createFile(['Hello Greer!'], 'test.txt', 'text/plain');
+    const [file, info] = createFile(['Hello Greer!'], 'test.txt', 'text/plain');
     const response = await app.request('/storage', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

@@ -13,6 +13,7 @@ export const ISODate = v.pipe(v.string(), v.isoDate());
 export const ISODateTime = v.pipe(v.string(), v.isoDateTime());
 const Int = v.pipe(v.number(), v.integer());
 
+export const Email = v.pipe(v.string(), v.email(), v.maxLength(200));
 export const Name = v.pipe(v.string(), v.minLength(1), v.maxLength(400));
 export const Description = v.pipe(v.string(), v.maxLength(1000));
 
@@ -76,7 +77,10 @@ export const UpdateValue = v.variant('type', [
   v.object({ type: NumberType, value: v.nullable(Int) }),
   v.object({ type: BooleanType, value: v.boolean() }),
   v.object({ type: ChoiceType, value: v.nullable(ID) }),
-  v.object({ type: ChoiceListType, value: v.object({ add: v.array(ID), remove: v.array(ID) }) }),
+  v.object({
+    type: ChoiceListType,
+    value: v.object({ add: v.array(ID), remove: v.array(ID) }),
+  }),
   v.object({ type: DateType, value: v.nullable(ISODate) }),
   v.object({ type: DateTimeType, value: v.nullable(ISODateTime) }),
   v.object({ type: FileType, value: v.array(v.string()) }),

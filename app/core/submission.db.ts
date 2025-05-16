@@ -1,16 +1,19 @@
 import * as v from 'valibot';
 import { prisma } from '~/services/db';
 
-import {
-  SubmissionOutput,
-  type StartParams,
-  type SubmissionInput,
-  type SubmissionParams,
+import type {
+  StartParams,
+  SubmissionJSON,
+  SubmissionParams,
 } from './submission.types';
 import { DeletedOutput, type DeletedInput } from './types';
+import { UserParams } from './user.types';
 
-export async function submissionList() {
-  const submissions: SubmissionInput[] = await prisma.submission.findMany({
+export async function submissionList({
+  userId,
+}: UserParams): Promise<SubmissionJSON[]> {
+  const submissions = await prisma.submission.findMany({
+    where: { deletedAt: null, users: { some: { userId, deletedAt: null } } },
     select: {
       id: true,
       state: true,
@@ -20,12 +23,19 @@ export async function submissionList() {
       updatedAt: true,
     },
   });
-  return v.parse(v.array(SubmissionOutput), submissions);
+  return submissions.map(({ submittedAt, state, ...submission }) => {
+    if (state == 'submitted' && submittedAt) {
+      return { ...submission, state, submittedAt };
+    }
+    return { ...submission, state: 'draft', submittedAt: null };
+  });
 }
 
-export async function submissionGet({ submissionId }: SubmissionParams) {
-  const submission: SubmissionInput = await prisma.submission.findUniqueOrThrow(
-    {
+export async function submissionGet({
+  submissionId,
+}: SubmissionParams): Promise<SubmissionJSON> {
+  const { submittedAt, state, ...submission } =
+    await prisma.submission.findUniqueOrThrow({
       where: {
         id: submissionId,
         deletedAt: null,
@@ -40,12 +50,17 @@ export async function submissionGet({ submissionId }: SubmissionParams) {
         createdAt: true,
         updatedAt: true,
       },
-    }
-  );
-  return v.parse(SubmissionOutput, submission);
+    });
+  if (state == 'submitted' && submittedAt) {
+    return { ...submission, state, submittedAt };
+  }
+  return { ...submission, state: 'draft', submittedAt: null };
 }
 
-export async function submissionStart({ path }: StartParams) {
+export async function submissionStart(
+  { userId }: UserParams,
+  { path }: StartParams,
+): Promise<SubmissionJSON> {
   const form = await prisma.form.findFirstOrThrow({
     where: {
       paths: { some: { path } },
@@ -54,7 +69,7 @@ export async function submissionStart({ path }: StartParams) {
     },
     select: { id: true, tableId: true },
   });
-  const submission: SubmissionInput = await prisma.$transaction(async (tx) => {
+  const submission = await prisma.$transaction(async (tx) => {
     const sequence = await tx.tableRowSequence.upsert({
       where: { tableId: form.tableId },
       update: { lastRowNumber: { increment: 1 } },
@@ -66,21 +81,22 @@ export async function submissionStart({ path }: StartParams) {
         number: sequence.lastRowNumber,
         formId: form.id,
         tableId: form.tableId,
+        users: { create: { userId } },
       },
       select: {
         id: true,
-        state: true,
         number: true,
-        submittedAt: true,
         createdAt: true,
         updatedAt: true,
       },
     });
   });
-  return v.parse(SubmissionOutput, submission);
+  return { ...submission, state: 'draft', submittedAt: null };
 }
 
-export async function submissionSubmit({ submissionId }: SubmissionParams) {
+export async function submissionSubmit({
+  submissionId,
+}: SubmissionParams): Promise<SubmissionJSON> {
   const row = await prisma.submission.findUniqueOrThrow({
     where: {
       id: submissionId,
@@ -90,7 +106,8 @@ export async function submissionSubmit({ submissionId }: SubmissionParams) {
     },
     select: { number: true, tableId: true },
   });
-  const submission: SubmissionInput = await prisma.submission.update({
+  const submittedAt = new Date();
+  const submission = await prisma.submission.update({
     where: {
       id: submissionId,
       deletedAt: null,
@@ -99,19 +116,21 @@ export async function submissionSubmit({ submissionId }: SubmissionParams) {
     },
     data: {
       state: 'submitted',
-      submittedAt: new Date(),
+      submittedAt,
       row: { create: row },
     },
     select: {
       id: true,
-      state: true,
-      submittedAt: true,
       createdAt: true,
       updatedAt: true,
       number: true,
     },
   });
-  return v.parse(SubmissionOutput, submission);
+  return {
+    ...submission,
+    state: 'submitted',
+    submittedAt: submittedAt.toISOString(),
+  };
 }
 
 export async function submissionDelete({ submissionId }: SubmissionParams) {

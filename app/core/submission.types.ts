@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { SubmissionState } from '../generated/prisma';
+import { SubmissionState } from '~/generated/prisma';
 import { ID, ISOTimestamp, Timestamp } from './types';
 
 const SubmissionFragment = v.object({
@@ -52,6 +52,7 @@ export const SubmissionJSON = v.variant('state', [
     submittedAt: ISOTimestamp,
   }),
 ]);
+export type SubmissionJSON = v.InferOutput<typeof SubmissionJSON>;
 
 export const SubmissionListJSON = v.object({
   data: v.array(SubmissionJSON),

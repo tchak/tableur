@@ -18,8 +18,6 @@ export default await createHonoServer({
     app.get('api/docs', Scalar({ theme: 'saturn', url: '/api/schema' }));
 
     if (import.meta.env.MODE == 'development') {
-      app.use(prettyJSON());
-
       generateSpecs(app).then((spec) => {
         Bun.write('openapi.json', JSON.stringify(spec, null, 2));
       });
@@ -29,5 +27,9 @@ export default await createHonoServer({
   beforeAll(app) {
     app.use(timing());
     app.use(requestId());
+
+    if (import.meta.env.MODE == 'development') {
+      app.use('api/v1', prettyJSON());
+    }
   },
 });

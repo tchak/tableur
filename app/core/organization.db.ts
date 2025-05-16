@@ -1,7 +1,6 @@
 import * as v from 'valibot';
 import { prisma } from '~/services/db';
 
-import { FormPathOutput, type FormPathInput } from './form.types';
 import type {
   OrganizationCreateInput,
   OrganizationJSON,
@@ -9,12 +8,14 @@ import type {
   OrganizationUpdateInput,
 } from './organization.types';
 import { DeletedOutput, type DeletedInput } from './types';
+import type { UserParams } from './user.types';
 
 export async function organizationCreate(
-  input: OrganizationCreateInput
+  { userId }: UserParams,
+  input: OrganizationCreateInput,
 ): Promise<OrganizationJSON> {
   return prisma.organization.create({
-    data: input,
+    data: { name: input.name, users: { create: { userId } } },
     select: { id: true, name: true, createdAt: true, updatedAt: true },
   });
 }
@@ -32,7 +33,7 @@ export async function organizationDelete({
 
 export async function organizationUpdate(
   { organizationId }: OrganizationParams,
-  input: OrganizationUpdateInput
+  input: OrganizationUpdateInput,
 ): Promise<void> {
   await prisma.organization.update({
     where: { id: organizationId, deletedAt: null },
@@ -60,9 +61,11 @@ export async function organizationGet({
   });
 }
 
-export async function organizationList(): Promise<OrganizationJSON[]> {
+export async function organizationList({
+  userId,
+}: UserParams): Promise<OrganizationJSON[]> {
   return prisma.organization.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, users: { some: { userId, deletedAt: null } } },
     orderBy: { createdAt: 'asc' },
     take: 100,
     select: {
@@ -77,7 +80,7 @@ export async function organizationList(): Promise<OrganizationJSON[]> {
 export async function organizationPathList({
   organizationId,
 }: OrganizationParams) {
-  const paths: FormPathInput[] = await prisma.formPath.findMany({
+  return prisma.formPath.findMany({
     where: { organization: { id: organizationId, deletedAt: null } },
     take: 100,
     select: {
@@ -88,5 +91,4 @@ export async function organizationPathList({
       },
     },
   });
-  return v.parse(v.array(FormPathOutput), paths);
 }

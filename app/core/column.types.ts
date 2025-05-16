@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { ColumnType } from '../generated/prisma';
+import { ColumnType } from '~/generated/prisma';
 import {
   BooleanType,
   ChoiceListType,

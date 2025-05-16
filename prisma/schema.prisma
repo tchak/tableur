@@ -25,19 +25,61 @@ enum ColumnType {
 }
 
 model User {
-  id        String    @id @default(uuid()) @db.Uuid
-  email     String    @unique
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  id          String    @id @default(uuid()) @db.Uuid
+  email       String    @unique
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  confirmedAt DateTime? @map("confirmed_at")
 
   teams         TeamMembership[]
   organizations OrganizationMembership[]
   submissions   SubmissionMembership[]
   comments      Comment[]
 
+  tokens   AuthToken[]
+  sessions Session[]
+
   @@index([deletedAt])
   @@map("users")
+}
+
+model Session {
+  id             String    @id @default(uuid()) @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+  expiresAt      DateTime? @map("expires_at")
+  userId         String?   @map("user_id") @db.Uuid
+  organizationId String?   @map("organization_id") @db.Uuid
+  data           Json
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model LoginRequest {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  email     String
+  otp       String
+
+  @@unique([email, otp])
+  @@map("login_requests")
+}
+
+model AuthToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    String   @map("user_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_tokens")
 }
 
 model Organization {
@@ -49,10 +91,11 @@ model Organization {
 
   sequence OrganizationTableSequence?
 
-  teams  Team[]
-  tables Table[]
-  paths  FormPath[]
-  users  OrganizationMembership[]
+  teams    Team[]
+  tables   Table[]
+  paths    FormPath[]
+  users    OrganizationMembership[]
+  sessions Session[]
 
   @@index([deletedAt])
   @@map("organizations")

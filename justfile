@@ -4,7 +4,7 @@ default: dev
 
 [group('dev')]
 dev:
-  PORT=8080 bun -b vite
+  bun -b vite
 
 [group('prod')]
 start:

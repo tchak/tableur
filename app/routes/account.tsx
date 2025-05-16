@@ -11,27 +11,40 @@ import { useFetcher, href } from 'react-router';
 import { EditIcon } from 'lucide-react';
 
 import type { Route } from './+types/account';
-import { Header } from '~/components/ui/header';
+import { getUser, getSession } from '~/middleware/session';
+import { organizationList, organizationCreate } from '~/core/organization.db';
+import {
+  OrganizationCreateInput,
+  OrganizationSelectInput,
+} from '~/core/organization.types';
+import { parseFormData } from '~/utils';
 
-import { organizationList, organizationCreate } from '../core/organization.db';
-
-export const loader = async () => {
-  const organizations = await organizationList();
-  return { organizations, organizationId: organizations.at(0)?.id ?? null };
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  const user = getUser(context);
+  const organizations = await organizationList({ userId: user.id });
+  const organizationId = user.organization?.id ?? null;
+  return { organizations, organizationId };
 };
 
-export const action = async ({ request }: Route.ActionArgs) => {
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const user = getUser(context);
   const formData = await request.formData();
   const action = formData.get('action');
   switch (action) {
     case 'create': {
-      const name = String(formData.get('name') ?? '');
-      await organizationCreate({ name });
+      const submission = parseFormData(OrganizationCreateInput, formData);
+      if (submission.status != 'success') {
+        return submission.reply();
+      }
+      await organizationCreate({ userId: user.id }, submission.value);
       break;
     }
     case 'select': {
-      const organizationId = formData.get('organizationId');
-      console.log(organizationId);
+      const submission = parseFormData(OrganizationSelectInput, formData);
+      if (submission.status == 'success') {
+        const session = getSession(context);
+        session.set('organizationId', submission.value.organizationId);
+      }
       break;
     }
   }
@@ -39,14 +52,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="bg-background relative flex h-dvh w-full flex-col overflow-hidden">
-      <Header items={[]} />
-      <main className="container mx-auto mt-8">
-        <div className="flex flex-col gap-4 px-2 md:flex-row">
-          <OrganizationList {...loaderData} />
-          <OrganizationCreate />
-        </div>
-      </main>
+    <div className="flex flex-col gap-4 px-2 md:flex-row">
+      <OrganizationList {...loaderData} />
+      <OrganizationCreate />
     </div>
   );
 }
