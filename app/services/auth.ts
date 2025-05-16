@@ -32,6 +32,9 @@ export const canAccess = (
 ) =>
   createMiddleware<Env>(async (c, next) => {
     const { userId } = c.var;
+    if (!userId) {
+      throw new HTTPException(401, { message: 'Unauthorized' });
+    }
     const ok = await check(userId, c.req.param());
     if (ok) {
       return next();

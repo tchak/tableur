@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
 
+import { auth } from '~/services/auth';
 import { env } from '~/services/env';
 import { commentCreate, commentDelete, commentList } from './comment.db';
 import {
@@ -41,12 +42,16 @@ comments
   )
   .post(
     '/',
+    auth,
     validator('param', CommentParams),
     validator('json', CommentCreateInput),
     async (c) => {
+      const { userId } = c.var;
       const params = c.req.valid('param');
       const input = c.req.valid('json');
-      const data = await commentCreate(params, input).catch(handlePrismaError);
+      const data = await commentCreate(params, input, userId).catch(
+        handlePrismaError,
+      );
       return c.json({ data }, { status: 201 });
     },
   );

@@ -38,6 +38,7 @@ describe('api/v1/tables/:id/rows/:id/comments', () => {
     const comment = await commentCreate(
       { tableId, rowId },
       { body: 'Test Comment' },
+      user.id,
     );
     commentId = comment.id;
     const token = await createAuthToken(user.id);

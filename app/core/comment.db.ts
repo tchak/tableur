@@ -11,20 +11,21 @@ import { RowParams } from './row.types';
 import { DeletedOutput, type DeletedInput } from './types';
 
 export async function commentCreate(
-  params: RowParams,
-  input: CommentCreateInput
+  { tableId, rowId }: RowParams,
+  input: CommentCreateInput,
+  userId: string,
 ) {
   const comment: CommentInput = await prisma.comment.create({
     data: {
       row: {
         connect: {
-          id: params.rowId,
+          id: rowId,
           deletedAt: null,
-          table: { id: params.tableId, deletedAt: null },
+          table: { id: tableId, deletedAt: null },
         },
       },
-      user: { create: { email: `${crypto.randomUUID()}@user.com` } },
-      ...input,
+      user: { connect: { id: userId } },
+      body: input.body,
     },
     select: {
       id: true,
