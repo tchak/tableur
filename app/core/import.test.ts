@@ -25,7 +25,7 @@ Jane Doe,45,no,1975-06-15`;
       const data = await response.json();
       const { data: preview } = v.parse(
         v.object({ data: ImportPreviewJSON }),
-        data
+        data,
       );
       expect(preview.columns.length).toBe(4);
       expect(preview.columns).toMatchObject([

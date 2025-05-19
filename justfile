@@ -22,20 +22,24 @@ install:
 setup: install lint test-ci db-push-dev
 
 [group('lint')]
-lint: typecheck eslint prisma-validate
+lint: prettier typecheck eslint prisma-validate
 
 [group('lint')]
 eslint:
-  bun -b eslint .
+  bunx -b eslint .
 
 [group('lint')]
 typecheck:
   react-router typegen
-  bun -b tsc
+  bunx -b tsc
+
+[group('dev')]
+prettier:
+  bunx prettier . --write
 
 [group('lint')]
 prisma-validate:
-  bun -b prisma validate
+  bunx -b prisma validate
 
 [group('test')]
 test:
@@ -47,7 +51,7 @@ test-ci: db-push-test
 
 [group('db'), group('dev')]
 db-push-dev reset="":
-  bun -b prisma db push {{ if reset == "reset" { "--force-reset" } else { "" } }}
+  bunx -b prisma db push {{ if reset == "reset" { "--force-reset" } else { "" } }}
 
 [group('db'), group('test')]
 db-push-test:
@@ -58,15 +62,15 @@ db-push: db-push-dev db-push-test
 
 [group('db'), group('dev')]
 db-migrate-dev:
-  bun -b prisma db migrate dev
+  bunx -b prisma db migrate dev
 
 [group('db'), group('dev')]
 db-migrate-reset:
-  bun -b prisma db migrate reset
+  bunx -b prisma db migrate reset
 
 [group('db'), group('prod')]
 db-migrate:
-  bun -b prisma db migrate deploy
+  bunx -b prisma db migrate deploy
 
 [group('storage'), group('dev')]
 storage-reset:

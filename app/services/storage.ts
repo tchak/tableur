@@ -41,8 +41,8 @@ const storage = new FileStorage(
     undefined,
     undefined,
     undefined,
-    temporaryUrlGenerator
-  )
+    temporaryUrlGenerator,
+  ),
 );
 
 const router = new Hono();
@@ -57,7 +57,7 @@ router.get(
     const secretPath = await unseal(
       query.secret,
       env.STORAGE_SECRET_KEY,
-      defaults
+      defaults,
     );
     const path = pathFor(params);
     if (path == secretPath) {
@@ -67,7 +67,7 @@ router.get(
       });
     }
     return c.body('Unauthorized', 401);
-  }
+  },
 );
 router.put(
   ':key/:filename',
@@ -79,7 +79,7 @@ router.put(
     const secretPath = await unseal(
       query.secret,
       env.STORAGE_SECRET_KEY,
-      defaults
+      defaults,
     );
     const path = pathFor(params);
     if (path == secretPath) {
@@ -88,14 +88,14 @@ router.put(
       return c.body(null, 204);
     }
     return c.body('Unauthorized', 401);
-  }
+  },
 );
 router.post('/', validator('json', FileInfo), async (c) => {
   const fileInfo = c.req.valid('json');
   const { blobId } = await createBlob(fileInfo);
   return c.json(
     { blobId, url: await url(blobId, { expiresAt: 1000 * 60 * 10 }) },
-    { status: 201 }
+    { status: 201 },
   );
 });
 
@@ -111,12 +111,12 @@ export async function readFile(path: string): Promise<BytesStream> {
 export async function writeFile(
   path: string,
   stream: BytesStream,
-  options?: WriteOptions
+  options?: WriteOptions,
 ) {
   await storage.write(
     path,
     Readable.fromWeb(stream as unknown as NodeReadableStream),
-    options
+    options,
   );
 }
 

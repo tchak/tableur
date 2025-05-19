@@ -14,7 +14,7 @@ export const env = createEnv({
       STORAGE_HOSTNAME: v.pipe(v.string(), v.url()),
       NODE_ENV: v.fallback(
         v.picklist(['development', 'production', 'test']),
-        'development'
+        'development',
       ),
     },
   },

@@ -2,7 +2,14 @@ import * as v from 'valibot';
 
 import { SubmissionJSON, SubmissionOutput } from './submission.types';
 import { TableGetJSON, TableGetOutput } from './table.types';
-import { Data, ID, ISOTimestamp, NewData, Timestamp, UpdateData } from './types';
+import {
+  Data,
+  ID,
+  ISOTimestamp,
+  NewData,
+  Timestamp,
+  UpdateData,
+} from './types';
 
 export const RowCreateInput = v.object({
   data: v.optional(NewData),

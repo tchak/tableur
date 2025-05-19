@@ -14,7 +14,7 @@ import { DeletedOutput, type DeletedInput } from './types';
 
 export async function rowCreate(
   { tableId }: TableParams,
-  { data }: RowCreateInput
+  { data }: RowCreateInput,
 ) {
   const row: RowInput = await prisma.$transaction(async (tx) => {
     const sequence = await tx.tableRowSequence.upsert({
@@ -149,7 +149,7 @@ export async function rowDelete({ tableId, rowId }: RowParams) {
 
 export async function rowUpdate(
   { tableId, rowId }: RowParams,
-  input: RowUpdateInput
+  input: RowUpdateInput,
 ) {
   const row = await prisma.row.update({
     where: {

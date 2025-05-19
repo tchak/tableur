@@ -32,7 +32,10 @@ describe('storage', () => {
     });
     const data = await response.json();
     const blob = v.parse(
-      v.object({ blobId: v.pipe(v.string(), v.uuid()), url: v.pipe(v.string(), v.url()) }),
+      v.object({
+        blobId: v.pipe(v.string(), v.uuid()),
+        url: v.pipe(v.string(), v.url()),
+      }),
       data,
     );
     const url = new URL(blob.url);

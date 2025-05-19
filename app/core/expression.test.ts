@@ -14,9 +14,15 @@ describe('expression', () => {
         right: { type: 'number', value: 2 },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 2 } })).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 2 } }),
+      ).toBeTrue();
     });
 
     it('ne', () => {
@@ -28,9 +34,15 @@ describe('expression', () => {
         right: { type: 'number', value: 2 },
       };
       expect(compute(expression, {})).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 2 } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 2 } }),
+      ).toBeFalse();
     });
 
     it('gt', () => {
@@ -42,10 +54,18 @@ describe('expression', () => {
         right: { type: 'number', value: 2 },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 2 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 3 } })).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 2 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 3 } }),
+      ).toBeTrue();
     });
 
     it('gte', () => {
@@ -57,10 +77,18 @@ describe('expression', () => {
         right: { type: 'number', value: 2 },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 2 } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 3 } })).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 2 } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 3 } }),
+      ).toBeTrue();
     });
 
     it('lt', () => {
@@ -72,10 +100,18 @@ describe('expression', () => {
         right: { type: 'number', value: 2 },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 2 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 3 } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 2 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 3 } }),
+      ).toBeFalse();
     });
 
     it('lte', () => {
@@ -87,10 +123,18 @@ describe('expression', () => {
         right: { type: 'number', value: 2 },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 2 } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 3 } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 2 } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 3 } }),
+      ).toBeFalse();
     });
   });
 
@@ -104,11 +148,17 @@ describe('expression', () => {
         right: { type: 'text', value: 'hello' },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeFalse();
       expect(
-        compute(expression, { [columnId]: { type: 'text', value: 'hello world' } }),
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
       ).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeTrue();
+      expect(
+        compute(expression, {
+          [columnId]: { type: 'text', value: 'hello world' },
+        }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeTrue();
     });
 
     it('ne', () => {
@@ -120,11 +170,17 @@ describe('expression', () => {
         right: { type: 'text', value: 'hello' },
       };
       expect(compute(expression, {})).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeTrue();
       expect(
-        compute(expression, { [columnId]: { type: 'text', value: 'hello world' } }),
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
       ).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
+      expect(
+        compute(expression, {
+          [columnId]: { type: 'text', value: 'hello world' },
+        }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
     });
   });
 
@@ -138,9 +194,15 @@ describe('expression', () => {
         right: { type: 'boolean', value: true },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'boolean', value: false } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'boolean', value: true } })).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'boolean', value: false } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'boolean', value: true } }),
+      ).toBeTrue();
     });
 
     it('ne', () => {
@@ -152,9 +214,15 @@ describe('expression', () => {
         right: { type: 'boolean', value: true },
       };
       expect(compute(expression, {})).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'boolean', value: false } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'boolean', value: true } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'boolean', value: false } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'boolean', value: true } }),
+      ).toBeFalse();
     });
   });
 
@@ -169,14 +237,21 @@ describe('expression', () => {
         right: { type: 'datetime', value: now.toString() },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.add({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.add({ days: 1 }).toString(),
+          },
         }),
       ).toBeFalse();
       expect(
-        compute(expression, { [columnId]: { type: 'datetime', value: now.toString() } }),
+        compute(expression, {
+          [columnId]: { type: 'datetime', value: now.toString() },
+        }),
       ).toBeTrue();
     });
 
@@ -190,14 +265,21 @@ describe('expression', () => {
         right: { type: 'datetime', value: now.toString() },
       };
       expect(compute(expression, {})).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeTrue();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.add({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.add({ days: 1 }).toString(),
+          },
         }),
       ).toBeTrue();
       expect(
-        compute(expression, { [columnId]: { type: 'datetime', value: now.toString() } }),
+        compute(expression, {
+          [columnId]: { type: 'datetime', value: now.toString() },
+        }),
       ).toBeFalse();
     });
 
@@ -211,18 +293,28 @@ describe('expression', () => {
         right: { type: 'datetime', value: now.toString() },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.subtract({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.subtract({ days: 1 }).toString(),
+          },
         }),
       ).toBeFalse();
       expect(
-        compute(expression, { [columnId]: { type: 'datetime', value: now.toString() } }),
+        compute(expression, {
+          [columnId]: { type: 'datetime', value: now.toString() },
+        }),
       ).toBeFalse();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.add({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.add({ days: 1 }).toString(),
+          },
         }),
       ).toBeTrue();
     });
@@ -237,18 +329,28 @@ describe('expression', () => {
         right: { type: 'datetime', value: now.toString() },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.subtract({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.subtract({ days: 1 }).toString(),
+          },
         }),
       ).toBeFalse();
       expect(
-        compute(expression, { [columnId]: { type: 'datetime', value: now.toString() } }),
+        compute(expression, {
+          [columnId]: { type: 'datetime', value: now.toString() },
+        }),
       ).toBeTrue();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.add({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.add({ days: 1 }).toString(),
+          },
         }),
       ).toBeTrue();
     });
@@ -263,18 +365,28 @@ describe('expression', () => {
         right: { type: 'datetime', value: now.toString() },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
       expect(
-        compute(expression, {
-          [columnId]: { type: 'datetime', value: now.subtract({ days: 1 }).toString() },
-        }),
-      ).toBeTrue();
-      expect(
-        compute(expression, { [columnId]: { type: 'datetime', value: now.toString() } }),
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
       ).toBeFalse();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.add({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.subtract({ days: 1 }).toString(),
+          },
+        }),
+      ).toBeTrue();
+      expect(
+        compute(expression, {
+          [columnId]: { type: 'datetime', value: now.toString() },
+        }),
+      ).toBeFalse();
+      expect(
+        compute(expression, {
+          [columnId]: {
+            type: 'datetime',
+            value: now.add({ days: 1 }).toString(),
+          },
         }),
       ).toBeFalse();
     });
@@ -289,18 +401,28 @@ describe('expression', () => {
         right: { type: 'datetime', value: now.toString() },
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.subtract({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.subtract({ days: 1 }).toString(),
+          },
         }),
       ).toBeTrue();
       expect(
-        compute(expression, { [columnId]: { type: 'datetime', value: now.toString() } }),
+        compute(expression, {
+          [columnId]: { type: 'datetime', value: now.toString() },
+        }),
       ).toBeTrue();
       expect(
         compute(expression, {
-          [columnId]: { type: 'datetime', value: now.add({ days: 1 }).toString() },
+          [columnId]: {
+            type: 'datetime',
+            value: now.add({ days: 1 }).toString(),
+          },
         }),
       ).toBeFalse();
     });
@@ -327,12 +449,24 @@ describe('expression', () => {
         ],
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 2 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 3 } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 4 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 5 } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 2 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 3 } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 4 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 5 } }),
+      ).toBeFalse();
     });
 
     it('gt and lt and ne', () => {
@@ -361,13 +495,27 @@ describe('expression', () => {
         ],
       };
       expect(compute(expression, {})).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'text', value: 'hello' } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 1 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 2 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 3 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 4 } })).toBeTrue();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 5 } })).toBeFalse();
-      expect(compute(expression, { [columnId]: { type: 'number', value: 6 } })).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'text', value: 'hello' } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 1 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 2 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 3 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 4 } }),
+      ).toBeTrue();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 5 } }),
+      ).toBeFalse();
+      expect(
+        compute(expression, { [columnId]: { type: 'number', value: 6 } }),
+      ).toBeFalse();
     });
   });
 });

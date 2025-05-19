@@ -38,7 +38,7 @@ export async function importPreview(input: ImportPreviewInput) {
 
 export async function tableImport(
   { organizationId }: OrganizationParams,
-  input: TableImportInput
+  input: TableImportInput,
 ) {
   const preview = await prisma.importPreview.findUniqueOrThrow({
     where: { id: input.importId },
@@ -64,14 +64,14 @@ export async function tableImport(
   });
   await tableImportData(
     { tableId: table.id },
-    { importId: input.importId, mapping }
+    { importId: input.importId, mapping },
   );
   return table;
 }
 
 export async function tableImportData(
   { tableId }: TableParams,
-  input: TableImportDataInput
+  input: TableImportDataInput,
 ) {
   await prisma.importPreview.findUniqueOrThrow({
     where: { id: input.importId },
@@ -89,8 +89,8 @@ export async function tableImportData(
   });
   const headers = Object.fromEntries(
     Object.entries(input.mapping).map(
-      ([header, columnId]) => [columnId, header] as const
-    )
+      ([header, columnId]) => [columnId, header] as const,
+    ),
   );
   const columns: (ColumnImport & { id: string })[] = [];
   for (const { id, type } of tableColumns) {
@@ -152,7 +152,8 @@ async function parseImportPreview(stream: BytesStream) {
       })
       .on('end', () => {
         const columnValues = columns.map(
-          (column, index) => [column, rows.map((row) => row.at(index))] as const
+          (column, index) =>
+            [column, rows.map((row) => row.at(index))] as const,
         );
         for (const [column, values] of columnValues) {
           const value = values.at(0);
@@ -168,7 +169,7 @@ async function parseImportPreview(stream: BytesStream) {
 
 async function parseImportData(
   stream: BytesStream,
-  columns: (ColumnImport & { id: string })[]
+  columns: (ColumnImport & { id: string })[],
 ) {
   return new Promise<Data[]>((resolve, reject) => {
     const rows: Data[] = [];

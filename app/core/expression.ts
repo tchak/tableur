@@ -22,7 +22,11 @@ const OrExpression = v.object({
   expressions: v.array(BinaryExpression),
 });
 
-export const Expression = v.variant('type', [BinaryExpression, AndExpression, OrExpression]);
+export const Expression = v.variant('type', [
+  BinaryExpression,
+  AndExpression,
+  OrExpression,
+]);
 export type Expression = v.InferOutput<typeof Expression>;
 
 export function compute(expression: Expression, data: Data): boolean {
@@ -73,13 +77,19 @@ export function compute(expression: Expression, data: Data): boolean {
         case 'ne':
           return left.value !== right.value;
         default:
-          throw new Error(`Unsupported operator ${expression.operator} for type ${left.type}`);
+          throw new Error(
+            `Unsupported operator ${expression.operator} for type ${left.type}`,
+          );
       }
     }
     case 'and':
-      return expression.expressions.every((expression) => compute(expression, data));
+      return expression.expressions.every((expression) =>
+        compute(expression, data),
+      );
     case 'or':
-      return expression.expressions.some((expression) => compute(expression, data));
+      return expression.expressions.some((expression) =>
+        compute(expression, data),
+      );
   }
 }
 

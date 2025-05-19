@@ -57,7 +57,9 @@ function parseNumber(value: string): { type: 'number'; value: number } | null {
   return null;
 }
 
-function parseBoolean(value: string): { type: 'boolean'; value: boolean } | null {
+function parseBoolean(
+  value: string,
+): { type: 'boolean'; value: boolean } | null {
   const result = v.safeParse(BooleanValue, value);
   if (result.success) {
     return { type: 'boolean', value: result.output };
@@ -73,7 +75,9 @@ function parseDate(value: string): { type: 'date'; value: string } | null {
   return null;
 }
 
-function parseDateTime(value: string): { type: 'datetime'; value: string } | null {
+function parseDateTime(
+  value: string,
+): { type: 'datetime'; value: string } | null {
   const result = v.safeParse(ISODateTime, value);
   if (result.success) {
     return { type: 'datetime', value: result.output };
@@ -81,7 +85,12 @@ function parseDateTime(value: string): { type: 'datetime'; value: string } | nul
   return null;
 }
 
-const NumberValue = v.pipe(v.string(), v.minLength(1), v.transform(Number), v.number());
+const NumberValue = v.pipe(
+  v.string(),
+  v.minLength(1),
+  v.transform(Number),
+  v.number(),
+);
 
 const TrueValue = v.pipe(
   v.string(),

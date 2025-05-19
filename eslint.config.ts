@@ -24,5 +24,5 @@ export default tseslint.config(
     rules: {
       'react/jsx-no-constructed-context-values': 'error',
     },
-  }
+  },
 );

@@ -1,4 +1,8 @@
-import PgBoss, { type Job, type ScheduleOptions, type SendOptions } from 'pg-boss';
+import PgBoss, {
+  type Job,
+  type ScheduleOptions,
+  type SendOptions,
+} from 'pg-boss';
 
 import { env } from './env';
 const boss = new PgBoss(env.DATABASE_URL);
@@ -8,7 +12,9 @@ export async function start() {
   const queues = await boss.getQueues();
   console.log(
     'Queues:',
-    queues.map((queue) => queue.name).filter((name) => !name.startsWith('__pgboss')),
+    queues
+      .map((queue) => queue.name)
+      .filter((name) => !name.startsWith('__pgboss')),
   );
 }
 
@@ -35,13 +41,21 @@ export async function schedule(
   return () => boss.unschedule(name);
 }
 
-async function startWorker<T>(name: string, worker: Worker<T>, pollingIntervalSeconds = 2) {
+async function startWorker<T>(
+  name: string,
+  worker: Worker<T>,
+  pollingIntervalSeconds = 2,
+) {
   stopWorker(name);
-  const id = await boss.work(name, { pollingIntervalSeconds }, async (jobs: Job<T>[]) => {
-    for (const job of jobs) {
-      await worker(job);
-    }
-  });
+  const id = await boss.work(
+    name,
+    { pollingIntervalSeconds },
+    async (jobs: Job<T>[]) => {
+      for (const job of jobs) {
+        await worker(job);
+      }
+    },
+  );
   workers.set(name, id);
   return id;
 }

@@ -2,7 +2,14 @@ import * as v from 'valibot';
 
 import { ColumnCreateInput, ColumnJSON, ColumnOutput } from './column.types';
 import { ColumnImport } from './import.types';
-import { Description, ID, ISOTimestamp, Name, NewData, Timestamp } from './types';
+import {
+  Description,
+  ID,
+  ISOTimestamp,
+  Name,
+  NewData,
+  Timestamp,
+} from './types';
 
 export const TableCreateInput = v.object({
   name: Name,
