@@ -27,7 +27,7 @@ export const loginRequestCreate = base
       text: `Your login request OTP is ${request.otp}`,
     });
   })
-  .callable({ context: { user: null } });
+  .callable({ context: {} });
 
 export const loginRequestVerify = base
   .input(LoginRequestVerifyInput)
@@ -54,4 +54,4 @@ export const loginRequestVerify = base
       return null;
     }
   })
-  .callable({ context: { user: null } });
+  .callable({ context: {} });

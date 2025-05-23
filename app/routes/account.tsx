@@ -16,7 +16,7 @@ import { client } from '~/core/router';
 import {
   OrganizationCreateInput,
   OrganizationParams,
-} from '~/core/organization.types';
+} from '~/core/organization.contract';
 import { parseFormData } from '~/utils';
 
 export const loader = async ({ context }: Route.LoaderArgs) => {

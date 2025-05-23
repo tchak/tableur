@@ -3,10 +3,7 @@ import * as v from 'valibot';
 
 import { app } from '~/server/app';
 import { prisma } from '~/services/db';
-import {
-  OrganizationGetJSON,
-  OrganizationListJSON,
-} from './organization.types';
+import { openapi } from './organization.contract';
 import { createTestUser } from './user.test';
 
 describe('api/v1/organizations', () => {
@@ -25,7 +22,7 @@ describe('api/v1/organizations', () => {
     const response = await app.request('/api/v1/organizations', { headers });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: organizations } = v.parse(OrganizationListJSON, data);
+    const { data: organizations } = v.parse(openapi.list, data);
     expect(organizations.length).toBe(1);
   });
 
@@ -36,7 +33,7 @@ describe('api/v1/organizations', () => {
     );
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: organization } = v.parse(OrganizationGetJSON, data);
+    const { data: organization } = v.parse(openapi.find, data);
     expect(organization.id).toEqual(organizationId);
   });
 
@@ -50,14 +47,14 @@ describe('api/v1/organizations', () => {
     });
     expect(response.status).toBe(201);
     const data = await response.json();
-    const { data: organization } = v.parse(OrganizationGetJSON, data);
+    const { data: organization } = v.parse(openapi.create, data);
     expect(organization.name).toEqual('Hello World');
 
     {
       const response = await app.request('/api/v1/organizations', { headers });
       expect(response.status).toBe(200);
       const data = await response.json();
-      const { data: organizations } = v.parse(OrganizationListJSON, data);
+      const { data: organizations } = v.parse(openapi.list, data);
       expect(organizations.length).toBe(2);
       expect(organizations.map(({ name }) => name)).toStrictEqual([
         'Test Organization',

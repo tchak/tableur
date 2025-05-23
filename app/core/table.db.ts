@@ -1,7 +1,7 @@
 import { tableFind } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { authenticated } from '~/services/rpc';
-import { OrganizationParams } from './organization.types';
+import { OrganizationParams } from './organization.contract';
 import { TableCreateInput, TableParams, TableUpdateInput } from './table.types';
 
 const tableList = authenticated

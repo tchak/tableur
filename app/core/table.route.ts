@@ -2,7 +2,7 @@ import { vValidator as validator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
 import * as v from 'valibot';
 
-import { OrganizationParams } from './organization.types';
+import { OrganizationParams } from './organization.contract';
 import { client } from './router';
 import {
   TableCreateInput,

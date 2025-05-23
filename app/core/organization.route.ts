@@ -5,12 +5,11 @@ import * as v from 'valibot';
 
 import { env } from '~/services/env';
 import {
+  openapi,
   OrganizationCreateInput,
-  OrganizationGetJSON,
-  OrganizationListJSON,
   OrganizationParams,
   OrganizationUpdateInput,
-} from './organization.types';
+} from './organization.contract';
 import { client } from './router';
 
 const organizations = new Hono();
@@ -26,7 +25,7 @@ organizations
           description: '',
           content: {
             'application/json': {
-              schema: resolver(OrganizationListJSON),
+              schema: resolver(openapi.list),
             },
           },
         },
@@ -54,13 +53,13 @@ organization
   .get(
     '/',
     describeRoute({
-      description: 'Get organization',
+      description: 'Find organization',
       responses: {
         200: {
           description: '',
           content: {
             'application/json': {
-              schema: resolver(OrganizationGetJSON),
+              schema: resolver(openapi.find),
             },
           },
         },
@@ -70,7 +69,7 @@ organization
     validator('param', OrganizationParams),
     async (c) => {
       const params = c.req.valid('param');
-      const data = await client.organization.get(params, {
+      const data = await client.organization.find(params, {
         context: { request: c.req.raw },
       });
       return c.json({ data });
@@ -92,14 +91,14 @@ organization
   )
   .delete('/', validator('param', OrganizationParams), async (c) => {
     const params = c.req.valid('param');
-    await client.organization.delete(params, {
+    await client.organization.destroy(params, {
       context: { request: c.req.raw },
     });
     return c.body(null, { status: 204 });
   })
   .get('/paths', validator('param', OrganizationParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await client.organization.pathList(params, {
+    const data = await client.organization.paths(params, {
       context: { request: c.req.raw },
     });
     return c.json({ data });

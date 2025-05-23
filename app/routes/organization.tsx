@@ -13,7 +13,7 @@ export function meta() {
 
 export const loader = async ({ params, context }: Route.LoaderArgs) => {
   const user = getUser(context);
-  const organization = await client.organization.get(params, {
+  const organization = await client.organization.find(params, {
     context: { user },
   });
   return { organization };
@@ -29,7 +29,7 @@ export const action = async ({
   const action = formData.get('action');
   switch (action) {
     case 'delete': {
-      await client.organization.delete(params, { context: { user } });
+      await client.organization.destroy(params, { context: { user } });
       return redirect(href('/account'));
     }
   }
