@@ -12,6 +12,7 @@ export const ImportPreviewJSON = v.object({
   id: ID,
   columns: v.array(ColumnImport),
   rows: v.array(v.array(v.nullable(v.string()))),
+  delimiter: v.string(),
 });
 export type ImportPreviewJSON = v.InferInput<typeof ImportPreviewJSON>;
 

@@ -246,7 +246,7 @@ const anonymousPermissions = permix.template({
 
 const userPermissions = permix.template((user: User) => {
   return {
-    import: { create: true },
+    import: { create: user.organizationIds.size != 0 },
     organization: {
       list: true,
       create: true,

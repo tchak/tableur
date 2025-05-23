@@ -80,8 +80,9 @@ const tableImportData = authenticated
   .handler(async ({ context, input }) => {
     const table = await tableFind(input.tableId);
     context.check('table', 'write', table);
-    await prisma.importPreview.findUniqueOrThrow({
+    const { delimiter } = await prisma.importPreview.findUniqueOrThrow({
       where: { id: input.importId },
+      select: { delimiter: true },
     });
     const tableColumns = await prisma.column.findMany({
       where: {
@@ -113,7 +114,7 @@ const tableImportData = authenticated
     }
     const path = `import/${input.importId}.csv`;
     const stream = await readFile(path);
-    const data = await parseImportData(stream, columns);
+    const data = await parseImportData(stream, delimiter, columns);
 
     if (data.length > 0) {
       await prisma.$transaction(async (tx) => {
@@ -179,7 +180,7 @@ async function parseImportPreview(stream: BytesStream) {
             column.type = detectType(value);
           }
         }
-        return resolve({ columns, rows });
+        return resolve({ columns, rows, delimiter });
       })
       .on('error', reject);
   });
@@ -187,11 +188,13 @@ async function parseImportPreview(stream: BytesStream) {
 
 async function parseImportData(
   stream: BytesStream,
+  delimiter: string,
   columns: (ColumnImport & { id: string })[],
 ) {
   return new Promise<Data[]>((resolve, reject) => {
     const rows: Data[] = [];
     parseStream(Readable.fromWeb(stream as unknown as NodeReadableStream), {
+      delimiter,
       trim: true,
       discardUnmappedColumns: true,
       ignoreEmpty: true,

@@ -237,6 +237,7 @@ model Table {
 model ImportPreview {
   id        String   @id @default(uuid()) @db.Uuid
   createdAt DateTime @default(now()) @map("created_at")
+  delimiter String
   columns   Json
   rows      Json
 
