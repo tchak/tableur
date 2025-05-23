@@ -3,8 +3,12 @@ import { Hono } from 'hono';
 import * as v from 'valibot';
 
 import { client } from './router';
-import { RowCreateInput, RowParams, RowUpdateInput } from './row.types';
-import { TableParams } from './table.types';
+import {
+  RowCreateInput,
+  RowParams,
+  RowUpdateInput,
+  TableParams,
+} from './row.contract';
 
 const rows = new Hono();
 const row = new Hono();
@@ -36,7 +40,7 @@ rows
 row
   .get('/', validator('param', RowParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await client.row.get(params, {
+    const data = await client.row.find(params, {
       context: { request: c.req.raw },
     });
     return c.json({ data });
@@ -57,7 +61,7 @@ row
   )
   .delete('/', validator('param', RowParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await client.row.delete(params, {
+    const data = await client.row.destroy(params, {
       context: { request: c.req.raw },
     });
     return c.json({ data });

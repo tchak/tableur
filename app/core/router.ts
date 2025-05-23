@@ -5,7 +5,7 @@ import { router as comment } from './comment';
 import { router as form } from './form.db';
 import { router as import_ } from './import.db';
 import { router as organization } from './organization';
-import { router as row } from './row.db';
+import { router as row } from './row';
 import { router as submission } from './submission.db';
 import { router as table } from './table.db';
 

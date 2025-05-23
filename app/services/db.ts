@@ -1,4 +1,6 @@
 import * as v from 'valibot';
+
+import { Data } from '~/core/types';
 import { PrismaClient } from '../generated/prisma';
 
 const ColumnType = v.picklist([
@@ -42,7 +44,13 @@ const prisma = new PrismaClient().$extends({
     user: timestamps,
     organization: timestamps,
     table: timestamps,
-    row: timestamps,
+    row: {
+      ...timestamps,
+      data: {
+        needs: { data: true },
+        compute: (result) => v.parse(Data, result.data),
+      },
+    },
     form: timestamps,
     comment: timestamps,
     submission: {

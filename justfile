@@ -22,7 +22,7 @@ install:
 setup: install lint test-ci db-push-dev
 
 [group('lint')]
-lint: prettier typecheck eslint prisma-validate
+lint: prettier prisma-format typecheck eslint prisma-validate
 
 [group('lint')]
 eslint:

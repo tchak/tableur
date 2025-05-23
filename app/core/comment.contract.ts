@@ -1,9 +1,10 @@
 import { oc } from '@orpc/contract';
 import * as v from 'valibot';
 
+import { RowParams } from './row.contract';
 import { ID, ISOTimestamp } from './types';
 
-export const RowParams = v.object({ rowId: ID });
+export { RowParams };
 export const CommentParams = v.object({ commentId: ID });
 export const CommentCreateInput = v.object({
   rowId: ID,
