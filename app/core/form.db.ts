@@ -1,4 +1,4 @@
-import { formFind, tableFind } from '~/services/auth';
+import { withForm, withTable } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { authenticated } from '~/services/rpc';
 
@@ -7,9 +7,9 @@ import { TableParams } from './table.types';
 
 const formCreate = authenticated
   .input(FormCreateInput)
+  .use(withTable)
   .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'createForm', table);
+    context.check('table', 'createForm', context.table);
     const columns = await prisma.column.findMany({
       where: {
         table: {
@@ -21,15 +21,6 @@ const formCreate = authenticated
       },
       select: { id: true, position: true, name: true },
     });
-    const { organizationId } = await prisma.table.findUniqueOrThrow({
-      where: {
-        id: input.tableId,
-        deletedAt: null,
-        organization: { deletedAt: null },
-      },
-      select: { organizationId: true },
-    });
-
     const form = await prisma.form.create({
       data: {
         tableId: input.tableId,
@@ -37,8 +28,15 @@ const formCreate = authenticated
         //description: input.description,
         paths: {
           connectOrCreate: {
-            where: { path: input.path, organizationId, formId: null },
-            create: { path: input.path, organizationId },
+            where: {
+              path: input.path,
+              organizationId: context.table.organizationId,
+              formId: null,
+            },
+            create: {
+              path: input.path,
+              organizationId: context.table.organizationId,
+            },
           },
         },
         pages: {
@@ -82,10 +80,9 @@ const formCreate = authenticated
 
 const formList = authenticated
   .input(TableParams)
+  .use(withTable)
   .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'read', table);
-
+    context.check('table', 'read', context.table);
     const forms = await prisma.form.findMany({
       where: { table: { id: input.tableId }, deletedAt: null },
       select: {
@@ -105,10 +102,9 @@ const formList = authenticated
 
 const formGet = authenticated
   .input(FormParams)
+  .use(withForm)
   .handler(async ({ context, input }) => {
-    const data = await formFind(input.formId);
-    context.check('form', 'read', data);
-
+    context.check('form', 'read', context.form);
     const form = await prisma.form.findUniqueOrThrow({
       where: { id: input.formId, deletedAt: null },
       select: {
@@ -157,35 +153,25 @@ const formGet = authenticated
 
 const formUpdate = authenticated
   .input(FormUpdateInput)
+  .use(withForm)
   .handler(async ({ context, input }) => {
-    const form = await formFind(input.formId);
-    context.check('form', 'write', form);
-
+    context.check('form', 'write', context.form);
     await prisma.form.update({
       where: { id: input.formId, deletedAt: null },
       data: { name: input.name },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        paths: { orderBy: { createdAt: 'asc' }, select: { path: true } },
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: { id: true },
     });
   });
 
 const formDelete = authenticated
   .input(FormParams)
+  .use(withForm)
   .handler(async ({ context, input }) => {
-    const form = await formFind(input.formId);
-    context.check('form', 'write', form);
-
-    const deletedAt = new Date();
+    context.check('form', 'write', context.form);
     await prisma.form.update({
       where: { id: input.formId, deletedAt: null },
-      data: { deletedAt },
-      select: { id: true, deletedAt: true },
+      data: { deletedAt: new Date() },
+      select: { id: true },
     });
   });
 

@@ -4,7 +4,7 @@ import type {
 } from 'react-router';
 import { redirect, unstable_createContext } from 'react-router';
 
-import { userFind, type User } from '~/services/auth';
+import { findUser, type User } from '~/services/auth';
 import { sessionStorage, type Session } from '~/services/session';
 
 const sessionContext = unstable_createContext<Session>();
@@ -23,7 +23,7 @@ export const sessionMiddleware: unstable_MiddlewareFunction<Response> = async (
 
   const userId = session.get('userId');
   if (userId) {
-    const user = await userFind(userId, session.get('organizationId'));
+    const user = await findUser(userId, session.get('organizationId'));
     context.set(maybeUserContext, user);
   } else {
     context.set(maybeUserContext, null);

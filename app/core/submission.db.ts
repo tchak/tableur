@@ -1,4 +1,4 @@
-import { submissionFind } from '~/services/auth';
+import { withSubmission } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { authenticated } from '~/services/rpc';
 
@@ -30,9 +30,9 @@ const submissionList = authenticated.handler(async ({ context }) => {
 
 const submissionGet = authenticated
   .input(SubmissionParams)
+  .use(withSubmission)
   .handler(async ({ context, input }) => {
-    const data = await submissionFind(input.submissionId);
-    context.check('submission', 'read', data);
+    context.check('submission', 'read', context.submission);
     const { submittedAt, state, ...submission } =
       await prisma.submission.findUniqueOrThrow({
         where: {
@@ -92,9 +92,9 @@ const submissionStart = authenticated
 
 const submissionSubmit = authenticated
   .input(SubmissionParams)
+  .use(withSubmission)
   .handler(async ({ context, input }) => {
-    const submission = await submissionFind(input.submissionId);
-    context.check('submission', 'submit', submission);
+    context.check('submission', 'submit', context.submission);
 
     const { number, form } = await prisma.submission.findUniqueOrThrow({
       where: {
@@ -138,9 +138,9 @@ const submissionSubmit = authenticated
 
 const submissionDelete = authenticated
   .input(SubmissionParams)
+  .use(withSubmission)
   .handler(async ({ context, input }) => {
-    const submission = await submissionFind(input.submissionId);
-    context.check('submission', 'write', submission);
+    context.check('submission', 'write', context.submission);
     await prisma.submission.update({
       where: {
         id: input.submissionId,
@@ -148,7 +148,7 @@ const submissionDelete = authenticated
         form: { deletedAt: null },
       },
       data: { deletedAt: new Date() },
-      select: { id: true, deletedAt: true },
+      select: { id: true },
     });
   });
 

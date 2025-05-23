@@ -1,4 +1,4 @@
-import { rowFind, tableFind } from '~/services/auth';
+import { withRow, withTable } from '~/services/auth';
 import { prisma } from '~/services/db';
 
 import { authenticated } from '~/services/rpc';
@@ -7,9 +7,9 @@ import { TableParams } from './table.types';
 
 const rowCreate = authenticated
   .input(RowCreateInput)
-  .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'createRow', table);
+  .use(withTable)
+  .handler(({ context, input }) => {
+    context.check('table', 'createRow', context.table);
     return prisma.$transaction(async (tx) => {
       const { lastRowNumber } = await tx.table.update({
         where: { id: input.tableId },
@@ -41,9 +41,9 @@ const rowCreate = authenticated
 
 const rowGet = authenticated
   .input(RowParams)
-  .handler(async ({ context, input }) => {
-    const row = await rowFind(input.rowId);
-    context.check('row', 'read', row);
+  .use(withRow)
+  .handler(({ context, input }) => {
+    context.check('row', 'read', context.row);
     return prisma.row.findUniqueOrThrow({
       where: { id: input.rowId, deletedAt: null },
       select: {
@@ -96,9 +96,9 @@ const rowGet = authenticated
 
 const rowList = authenticated
   .input(TableParams)
-  .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'read', table);
+  .use(withTable)
+  .handler(({ context, input }) => {
+    context.check('table', 'read', context.table);
     return prisma.row.findMany({
       where: {
         deletedAt: null,
@@ -122,33 +122,25 @@ const rowList = authenticated
 
 const rowDelete = authenticated
   .input(RowParams)
+  .use(withRow)
   .handler(async ({ context, input }) => {
-    const row = await rowFind(input.rowId);
-    context.check('row', 'write', row);
-    const deletedAt = new Date();
+    context.check('row', 'write', context.row);
     await prisma.row.update({
       where: { id: input.rowId, deletedAt: null },
-      data: { deletedAt },
-      select: { id: true, deletedAt: true },
+      data: { deletedAt: new Date() },
+      select: { id: true },
     });
-    return { id: input.rowId, deletedAt };
   });
 
 const rowUpdate = authenticated
   .input(RowUpdateInput)
+  .use(withRow)
   .handler(async ({ context, input }) => {
-    const row = await rowFind(input.rowId);
-    context.check('row', 'write', row);
-    return prisma.row.update({
+    context.check('row', 'write', context.row);
+    await prisma.row.update({
       where: { id: input.rowId, deletedAt: null },
       data: input.data,
-      select: {
-        id: true,
-        number: true,
-        data: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: { id: true },
     });
   });
 

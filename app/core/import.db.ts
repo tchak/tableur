@@ -3,7 +3,7 @@ import { Readable } from 'stream';
 import type { ReadableStream as NodeReadableStream } from 'stream/web';
 import { authenticated } from '~/services/rpc';
 
-import { tableFind } from '~/services/auth';
+import { withTable } from '~/services/auth';
 import { prisma } from '~/services/db';
 import {
   deleteFile,
@@ -77,9 +77,9 @@ const tableImport = authenticated
 
 const tableImportData = authenticated
   .input(TableImportDataInput)
+  .use(withTable)
   .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'write', table);
+    context.check('table', 'write', context.table);
     const { delimiter } = await prisma.importPreview.findUniqueOrThrow({
       where: { id: input.importId },
       select: { delimiter: true },

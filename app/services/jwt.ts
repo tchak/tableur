@@ -1,6 +1,6 @@
 import { jwtVerify, SignJWT } from 'jose';
 
-import { userFind, type User } from './auth';
+import { findUser, type User } from './auth';
 import { prisma } from './db';
 import { env } from './env';
 
@@ -42,7 +42,7 @@ export async function verifyAuthToken(token: string): Promise<User | null> {
     select: { userId: true },
   });
   if (authToken) {
-    return userFind(authToken.userId);
+    return findUser(authToken.userId);
   }
   return null;
 }

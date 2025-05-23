@@ -1,4 +1,4 @@
-import { userFind } from '~/services/auth';
+import { findUser } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { createAuthToken } from '~/services/jwt';
 
@@ -21,6 +21,6 @@ export async function createTestUser() {
     select: { id: true },
   });
   const token = await createAuthToken(userId);
-  const user = await userFind(userId);
+  const user = await findUser(userId);
   return { userId, organizationId, authorization: `Bearer ${token}`, user };
 }

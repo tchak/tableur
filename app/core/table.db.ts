@@ -1,4 +1,4 @@
-import { tableFind } from '~/services/auth';
+import { withTable } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { authenticated } from '~/services/rpc';
 import { OrganizationParams } from './organization.contract';
@@ -8,7 +8,6 @@ const tableList = authenticated
   .input(OrganizationParams)
   .handler(({ context, input }) => {
     context.check('organization', 'read', input);
-
     return prisma.table.findMany({
       where: {
         organization: { id: input.organizationId, deletedAt: null },
@@ -29,10 +28,9 @@ const tableList = authenticated
 
 const tableGet = authenticated
   .input(TableParams)
-  .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'read', table);
-
+  .use(withTable)
+  .handler(({ context, input }) => {
+    context.check('table', 'read', context.table);
     return prisma.table.findUniqueOrThrow({
       where: {
         id: input.tableId,
@@ -72,7 +70,6 @@ export const tableCreate = authenticated
   .input(TableCreateInput)
   .handler(({ context, input }) => {
     context.check('organization', 'createTable', input);
-
     return prisma.$transaction(async (tx) => {
       const { lastTableNumber } = await tx.organization.update({
         where: { id: input.organizationId },
@@ -120,10 +117,9 @@ export const tableCreate = authenticated
 
 const tableUpdate = authenticated
   .input(TableUpdateInput)
+  .use(withTable)
   .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'write', table);
-
+    context.check('table', 'write', context.table);
     await prisma.table.update({
       where: {
         id: input.tableId,
@@ -131,39 +127,31 @@ const tableUpdate = authenticated
         deletedAt: null,
       },
       data: { name: input.name },
-      select: {
-        id: true,
-        number: true,
-        name: true,
-        description: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: { id: true },
     });
   });
 
 const tableDelete = authenticated
   .input(TableParams)
+  .use(withTable)
   .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'write', table);
-
-    return prisma.table.update({
+    context.check('table', 'write', context.table);
+    await prisma.table.update({
       where: {
         id: input.tableId,
         organization: { deletedAt: null },
         deletedAt: null,
       },
       data: { deletedAt: new Date() },
-      select: { id: true, deletedAt: true },
+      select: { id: true },
     });
   });
 
 const tableClone = authenticated
   .input(TableParams)
+  .use(withTable)
   .handler(async ({ context, input }) => {
-    const table = await tableFind(input.tableId);
-    context.check('table', 'write', table);
+    context.check('table', 'write', context.table);
 
     const originalTable = await prisma.table.findUniqueOrThrow({
       where: {
