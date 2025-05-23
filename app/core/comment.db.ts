@@ -1,77 +1,63 @@
-import * as v from 'valibot';
+import { commentFind, rowFind } from '~/services/auth';
 import { prisma } from '~/services/db';
-
-import {
-  CommentOutput,
-  type CommentCreateInput,
-  type CommentInput,
-  type CommentParams,
-} from './comment.types';
+import { authenticated } from '~/services/rpc';
+import { CommentCreateInput, CommentParams } from './comment.types';
 import { RowParams } from './row.types';
-import { DeletedOutput, type DeletedInput } from './types';
 
-export async function commentCreate(
-  { tableId, rowId }: RowParams,
-  input: CommentCreateInput,
-  userId: string,
-) {
-  const comment: CommentInput = await prisma.comment.create({
-    data: {
-      row: {
-        connect: {
-          id: rowId,
-          deletedAt: null,
-          table: { id: tableId, deletedAt: null },
-        },
-      },
-      user: { connect: { id: userId } },
-      body: input.body,
-    },
-    select: {
-      id: true,
-      body: true,
-      createdAt: true,
-      user: { select: { id: true, email: true } },
-    },
-  });
-  return v.parse(CommentOutput, comment);
-}
+const commentCreate = authenticated
+  .input(CommentCreateInput)
+  .handler(async ({ context, input }) => {
+    const data = await rowFind(input.rowId);
+    context.check('row', 'write', data);
 
-export async function commentDelete(params: CommentParams) {
-  const comment: DeletedInput = await prisma.comment.update({
-    where: {
-      id: params.commentId,
-      deletedAt: null,
-      row: {
-        id: params.rowId,
-        deletedAt: null,
-        table: { id: params.tableId, deletedAt: null },
+    return prisma.comment.create({
+      data: {
+        row: { connect: { id: input.rowId, deletedAt: null } },
+        user: { connect: { id: context.user.id } },
+        body: input.body,
       },
-    },
-    data: { deletedAt: new Date() },
-    select: { id: true, deletedAt: true },
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+        user: { select: { id: true, email: true } },
+      },
+    });
   });
-  return v.parse(DeletedOutput, comment);
-}
 
-export async function commentList(params: RowParams) {
-  const comments: CommentInput[] = await prisma.comment.findMany({
-    where: {
-      deletedAt: null,
-      row: {
-        id: params.rowId,
-        deletedAt: null,
-        table: { id: params.tableId, deletedAt: null },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 100,
-    select: {
-      id: true,
-      body: true,
-      createdAt: true,
-      user: { select: { id: true, email: true } },
-    },
+const commentDelete = authenticated
+  .input(CommentParams)
+  .handler(async ({ context, input }) => {
+    const data = await commentFind(input.commentId);
+    context.check('comment', 'write', data);
+
+    await prisma.comment.update({
+      where: { id: input.commentId, deletedAt: null },
+      data: { deletedAt: new Date() },
+      select: { id: true },
+    });
   });
-  return v.parse(v.array(CommentOutput), comments);
-}
+
+export const commentList = authenticated
+  .input(RowParams)
+  .handler(async ({ context, input }) => {
+    const data = await rowFind(input.rowId);
+    context.check('row', 'read', data);
+    return prisma.comment.findMany({
+      where: { deletedAt: null, row: { id: input.rowId, deletedAt: null } },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+        user: { select: { id: true, email: true } },
+      },
+    });
+  });
+
+export const router = {
+  create: commentCreate,
+  delete: commentDelete,
+  list: commentList,
+};

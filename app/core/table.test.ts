@@ -2,12 +2,10 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
-import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
-import { organizationCreate } from './organization.db';
-import { tableCreate } from './table.db';
+import { client } from './router';
 import { _TableJSON, TableGetJSON, TableListJSON } from './table.types';
-import { userCreate } from './user.db';
+import { createTestUser } from './user.test';
 
 describe('api/v1/tables', () => {
   let organizationId: string;
@@ -16,21 +14,20 @@ describe('api/v1/tables', () => {
   beforeEach(async () => {
     await prisma.organization.deleteMany();
     await prisma.user.deleteMany();
-    const user = await userCreate({ email: 'test@example.com' });
-    const organization = await organizationCreate(
-      { userId: user.id },
+
+    const user = await createTestUser();
+    organizationId = user.organizationId;
+    headers = { authorization: user.authorization };
+
+    const table = await client.table.create(
       {
-        name: 'Test Organization',
+        organizationId,
+        name: 'Test Table',
+        columns: [{ name: 'Test Column', type: 'text' }],
       },
-    );
-    organizationId = organization.id;
-    const table = await tableCreate(
-      { organizationId },
-      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] },
+      { context: { user: user.user } },
     );
     tableId = table.id;
-    const token = await createAuthToken(user.id);
-    headers = { Authorization: `Bearer ${token}` };
   });
 
   it('should return a list of tables', async () => {
@@ -103,7 +100,7 @@ describe('api/v1/tables', () => {
       const response = await app.request(`/api/v1/tables/${tableId}`, {
         headers,
       });
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(404);
     }
   });
 

@@ -2,12 +2,10 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
-import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
-import { organizationCreate } from './organization.db';
+import { client } from './router';
 import { RowCreateJSON, RowGetJSON, RowListJSON } from './row.types';
-import { tableCreate } from './table.db';
-import { userCreate } from './user.db';
+import { createTestUser } from './user.test';
 
 describe('api/v1/tables/:id/rows', () => {
   let organizationId: string;
@@ -18,27 +16,23 @@ describe('api/v1/tables/:id/rows', () => {
   beforeEach(async () => {
     await prisma.organization.deleteMany();
     await prisma.user.deleteMany();
-    const user = await userCreate({ email: 'test@example.com' });
-    const organization = await organizationCreate(
-      { userId: user.id },
+
+    const user = await createTestUser();
+    organizationId = user.organizationId;
+    headers = { authorization: user.authorization };
+
+    const table = await client.table.create(
       {
-        name: 'Test Organization',
-      },
-    );
-    organizationId = organization.id;
-    const table = await tableCreate(
-      { organizationId },
-      {
+        organizationId,
         name: 'Test Table',
         columns: [{ name: 'Test Column', type: 'text' }],
         rows: [{}],
       },
+      { context: { user: user.user } },
     );
     tableId = table.id;
     rowId = (await prisma.row.findFirstOrThrow()).id;
     columnId = (await prisma.column.findFirstOrThrow()).id;
-    const token = await createAuthToken(user.id);
-    headers = { Authorization: `Bearer ${token}` };
   });
 
   it('should return a list of rows', async () => {

@@ -2,13 +2,10 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
-import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
-import { commentCreate } from './comment.db';
 import { CommentListJSON } from './comment.types';
-import { organizationCreate } from './organization.db';
-import { tableCreate } from './table.db';
-import { userCreate } from './user.db';
+import { client } from './router';
+import { createTestUser } from './user.test';
 
 describe('api/v1/tables/:id/rows/:id/comments', () => {
   let tableId: string;
@@ -18,31 +15,26 @@ describe('api/v1/tables/:id/rows/:id/comments', () => {
   beforeEach(async () => {
     await prisma.organization.deleteMany();
     await prisma.user.deleteMany();
-    const user = await userCreate({ email: 'test@example.com' });
-    const organization = await organizationCreate(
-      { userId: user.id },
+
+    const user = await createTestUser();
+    headers = { authorization: user.authorization };
+
+    const table = await client.table.create(
       {
-        name: 'Test Organization',
-      },
-    );
-    const table = await tableCreate(
-      { organizationId: organization.id },
-      {
+        organizationId: user.organizationId,
         name: 'Test Table',
         columns: [{ name: 'Test Column', type: 'text' }],
         rows: [{}],
       },
+      { context: { user: user.user } },
     );
     tableId = table.id;
     rowId = (await prisma.row.findFirstOrThrow()).id;
-    const comment = await commentCreate(
-      { tableId, rowId },
-      { body: 'Test Comment' },
-      user.id,
+    const comment = await client.comment.create(
+      { rowId, body: 'Test Comment' },
+      { context: { user: user.user } },
     );
     commentId = comment.id;
-    const token = await createAuthToken(user.id);
-    headers = { Authorization: `Bearer ${token}` };
   });
 
   it('should return a list of comments', async () => {
@@ -61,7 +53,7 @@ describe('api/v1/tables/:id/rows/:id/comments', () => {
       `/api/v1/tables/${tableId}/rows/${rowId}/comments/${commentId}`,
       { method: 'DELETE', headers },
     );
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
 
     {
       const response = await app.request(

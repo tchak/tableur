@@ -1,17 +1,9 @@
 import { Hono } from 'hono';
 import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
+import * as v from 'valibot';
 
-import { auth, canAccess, checkForm } from '~/services/auth';
 import { env } from '~/services/env';
-import { handlePrismaError } from './error.types';
-import {
-  formCreate,
-  formDelete,
-  formGet,
-  formList,
-  formUpdate,
-} from './form.db';
 import {
   FormCreateInput,
   FormGetJSON,
@@ -19,6 +11,7 @@ import {
   FormParams,
   FormUpdateInput,
 } from './form.types';
+import { client } from './router';
 import { TableParams } from './table.types';
 
 const forms = new Hono();
@@ -44,25 +37,29 @@ forms
     validator('param', TableParams),
     async (c) => {
       const params = c.req.valid('param');
-      const data = await formList(params);
+      const data = await client.form.list(params, {
+        context: { request: c.req.raw },
+      });
       return c.json({ data, meta: { total: data.length } });
     },
   )
   .post(
     '/',
     validator('param', TableParams),
-    validator('json', FormCreateInput),
+    validator('json', v.omit(FormCreateInput, ['tableId'])),
     async (c) => {
       const params = c.req.valid('param');
       const input = c.req.valid('json');
-      const data = await formCreate(params, input);
+      const data = await client.form.create(
+        { ...params, ...input },
+        { context: { request: c.req.raw } },
+      );
       c.header('Location', `/api/v1/forms/${data.id}`);
       return c.json({ data }, { status: 201 });
     },
   );
 
 form
-  .use(auth, canAccess(checkForm))
   .get(
     '/',
     describeRoute({
@@ -82,25 +79,30 @@ form
     validator('param', FormParams),
     async (c) => {
       const params = c.req.valid('param');
-      const data = await formGet(params).catch(handlePrismaError);
+      const data = await client.form.get(params, {
+        context: { request: c.req.raw },
+      });
       return c.json({ data });
     },
   )
   .patch(
     '/',
-    validator('json', FormUpdateInput),
+    validator('json', v.omit(FormUpdateInput, ['formId'])),
     validator('param', FormParams),
     async (c) => {
       const params = c.req.valid('param');
       const input = c.req.valid('json');
-      const data = await formUpdate(params, input).catch(handlePrismaError);
-      return c.json({ data });
+      await client.form.update(
+        { ...params, ...input },
+        { context: { request: c.req.raw } },
+      );
+      return c.body(null, { status: 204 });
     },
   )
   .delete('/', validator('param', FormParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await formDelete(params).catch(handlePrismaError);
-    return c.json({ data });
+    await client.form.delete(params, { context: { request: c.req.raw } });
+    return c.body(null, { status: 204 });
   });
 
 export { form, forms };

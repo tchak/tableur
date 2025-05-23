@@ -39,7 +39,11 @@ prettier:
 
 [group('lint')]
 prisma-validate:
-  bunx -b prisma validate
+  bun -b prisma validate
+
+[group('dev')]
+prisma-format:
+  bun -b prisma format
 
 [group('test')]
 test:

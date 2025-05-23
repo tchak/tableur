@@ -3,9 +3,9 @@ import * as v from 'valibot';
 import { ID, ISOTimestamp, Timestamp } from './types';
 
 export const CommentCreateInput = v.object({
+  rowId: ID,
   body: v.string(),
 });
-export type CommentCreateInput = v.InferInput<typeof CommentCreateInput>;
 
 export const CommentOutput = v.object({
   id: ID,

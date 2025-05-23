@@ -12,20 +12,18 @@ import {
 } from './types';
 
 export const TableCreateInput = v.object({
+  organizationId: ID,
   name: Name,
   description: v.optional(Description),
   columns: v.optional(v.pipe(v.array(ColumnCreateInput), v.maxLength(1000))),
   rows: v.optional(v.pipe(v.array(NewData), v.maxLength(1000))),
 });
-export type TableCreateInput = v.InferInput<typeof TableCreateInput>;
 
-export const TableUpdateInput = v.partial(
-  v.object({
-    name: Name,
-    description: Description,
-  }),
-);
-export type TableUpdateInput = v.InferInput<typeof TableUpdateInput>;
+export const TableUpdateInput = v.object({
+  tableId: ID,
+  name: v.optional(Name),
+  description: v.optional(Description),
+});
 
 const TableFragment = v.object({
   id: ID,
@@ -70,6 +68,7 @@ export const TableGetJSON = v.object({
 });
 
 export const TableImportInput = v.object({
+  organizationId: ID,
   importId: ID,
   name: Name,
   mapping: v.record(v.string(), ColumnImport),
@@ -77,7 +76,7 @@ export const TableImportInput = v.object({
 export type TableImportInput = v.InferInput<typeof TableImportInput>;
 
 export const TableImportDataInput = v.object({
+  tableId: ID,
   importId: ID,
   mapping: v.record(v.string(), ID),
 });
-export type TableImportDataInput = v.InferInput<typeof TableImportDataInput>;

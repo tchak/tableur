@@ -8,21 +8,10 @@ export type OrganizationParams = v.InferInput<typeof OrganizationParams>;
 export const OrganizationCreateInput = v.object({
   name: Name,
 });
-export type OrganizationCreateInput = v.InferInput<
-  typeof OrganizationCreateInput
->;
 
-export const OrganizationUpdateInput = v.partial(
-  v.object({
-    name: Name,
-  }),
-);
-export type OrganizationUpdateInput = v.InferInput<
-  typeof OrganizationUpdateInput
->;
-
-export const OrganizationSelectInput = v.object({
-  organizationId: v.pipe(v.string(), v.uuid()),
+export const OrganizationUpdateInput = v.object({
+  organizationId: ID,
+  name: v.optional(Name),
 });
 
 export const OrganizationJSON = v.object({

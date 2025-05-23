@@ -4,10 +4,15 @@ import * as v from 'valibot';
 import { app } from '~/server/app';
 import { prisma } from '~/services/db';
 import { ImportPreviewJSON } from './import.types';
+import { createTestUser } from './user.test';
 
 describe('api/v1/imports', () => {
+  let headers: Record<string, string>;
   beforeEach(async () => {
+    await prisma.user.deleteMany();
     await prisma.importPreview.deleteMany();
+    const user = await createTestUser();
+    headers = { authorization: user.authorization };
   });
 
   const CSV = `name,age,vegan,"birth date"
@@ -19,7 +24,7 @@ Jane Doe,45,no,1975-06-15`;
       const response = await app.request('/api/v1/imports', {
         method: 'POST',
         body: CSV.replaceAll(',', delimiter),
-        headers: { 'content-type': 'text/csv' },
+        headers: { 'content-type': 'text/csv', ...headers },
       });
       expect(response.status).toBe(201);
       const data = await response.json();

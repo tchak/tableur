@@ -1,8 +1,8 @@
 import { vValidator as validator } from '@hono/valibot-validator';
 import { Hono } from 'hono';
+import * as v from 'valibot';
 
-import { handlePrismaError } from './error.types';
-import { rowCreate, rowDelete, rowGet, rowList, rowUpdate } from './row.db';
+import { client } from './router';
 import { RowCreateInput, RowParams, RowUpdateInput } from './row.types';
 import { TableParams } from './table.types';
 
@@ -12,17 +12,22 @@ const row = new Hono();
 rows
   .get('/', validator('param', TableParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await rowList(params);
+    const data = await client.row.list(params, {
+      context: { request: c.req.raw },
+    });
     return c.json({ data, meta: { total: data.length } });
   })
   .post(
     '/',
     validator('param', TableParams),
-    validator('json', RowCreateInput),
+    validator('json', v.omit(RowCreateInput, ['tableId'])),
     async (c) => {
       const params = c.req.valid('param');
       const input = c.req.valid('json');
-      const data = await rowCreate(params, input);
+      const data = await client.row.create(
+        { ...params, ...input },
+        { context: { request: c.req.raw } },
+      );
       c.header('Location', `/api/v1/tables/${params.tableId}/rows/${data.id}`);
       return c.json({ data }, { status: 201 });
     },
@@ -31,23 +36,30 @@ rows
 row
   .get('/', validator('param', RowParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await rowGet(params).catch(handlePrismaError);
+    const data = await client.row.get(params, {
+      context: { request: c.req.raw },
+    });
     return c.json({ data });
   })
   .patch(
     '/',
     validator('param', RowParams),
-    validator('json', RowUpdateInput),
+    validator('json', v.omit(RowUpdateInput, ['rowId'])),
     async (c) => {
       const params = c.req.valid('param');
       const input = c.req.valid('json');
-      const data = await rowUpdate(params, input).catch(handlePrismaError);
+      const data = await client.row.update(
+        { ...params, ...input },
+        { context: { request: c.req.raw } },
+      );
       return c.json({ data });
     },
   )
   .delete('/', validator('param', RowParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await rowDelete(params).catch(handlePrismaError);
+    const data = await client.row.delete(params, {
+      context: { request: c.req.raw },
+    });
     return c.json({ data });
   });
 

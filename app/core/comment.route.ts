@@ -1,16 +1,15 @@
 import { Hono } from 'hono';
 import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
+import * as v from 'valibot';
 
-import { auth } from '~/services/auth';
 import { env } from '~/services/env';
-import { commentCreate, commentDelete, commentList } from './comment.db';
 import {
   CommentCreateInput,
   CommentListJSON,
   CommentParams,
 } from './comment.types';
-import { handlePrismaError } from './error.types';
+import { client } from './router';
 import { RowParams } from './row.types';
 
 const comments = new Hono();
@@ -36,21 +35,22 @@ comments
     validator('param', RowParams),
     async (c) => {
       const params = c.req.valid('param');
-      const data = await commentList(params);
+      const data = await client.comment.list(params, {
+        context: { request: c.req.raw },
+      });
       return c.json({ data, meta: { total: data.length } });
     },
   )
   .post(
     '/',
-    auth,
     validator('param', CommentParams),
-    validator('json', CommentCreateInput),
+    validator('json', v.omit(CommentCreateInput, ['rowId'])),
     async (c) => {
-      const { userId } = c.var;
       const params = c.req.valid('param');
       const input = c.req.valid('json');
-      const data = await commentCreate(params, input, userId).catch(
-        handlePrismaError,
+      const data = await client.comment.create(
+        { ...params, ...input },
+        { context: { request: c.req.raw } },
       );
       return c.json({ data }, { status: 201 });
     },
@@ -58,8 +58,8 @@ comments
 
 comment.delete('/', validator('param', CommentParams), async (c) => {
   const params = c.req.valid('param');
-  const data = await commentDelete(params).catch(handlePrismaError);
-  return c.json({ data });
+  await client.comment.delete(params, { context: { request: c.req.raw } });
+  return c.body(null, { status: 204 });
 });
 
 export { comment, comments };

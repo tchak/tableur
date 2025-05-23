@@ -2,14 +2,10 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
-import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
-import { formCreate } from './form.db';
-import { organizationCreate } from './organization.db';
-import { submissionStart } from './submission.db';
+import { client } from './router';
 import { SubmissionGetJSON, SubmissionListJSON } from './submission.types';
-import { tableCreate } from './table.db';
-import { userCreate } from './user.db';
+import { createTestUser } from './user.test';
 
 describe('api/v1/submissions', () => {
   let submissionId: string;
@@ -17,28 +13,32 @@ describe('api/v1/submissions', () => {
   beforeEach(async () => {
     await prisma.organization.deleteMany();
     await prisma.user.deleteMany();
-    const user = await userCreate({ email: 'test@example.com' });
-    const organization = await organizationCreate(
-      { userId: user.id },
+
+    const user = await createTestUser();
+    headers = { authorization: user.authorization };
+
+    const table = await client.table.create(
       {
-        name: 'Test Organization',
+        organizationId: user.organizationId,
+        name: 'Test Table',
+        columns: [{ name: 'Test Column', type: 'text' }],
       },
+      { context: { user: user.user } },
     );
-    const table = await tableCreate(
-      { organizationId: organization.id },
-      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] },
+    await client.form.create(
+      {
+        tableId: table.id,
+        name: 'Test Form',
+        title: 'Test Section',
+        path: 'test-form',
+      },
+      { context: { user: user.user } },
     );
-    await formCreate(
-      { tableId: table.id },
-      { name: 'Test Form', title: 'Test Section', path: 'test-form' },
-    );
-    const submission = await submissionStart(
-      { userId: user.id },
+    const submission = await client.submission.start(
       { path: 'test-form' },
+      { context: { user: user.user } },
     );
     submissionId = submission.id;
-    const token = await createAuthToken(user.id);
-    headers = { Authorization: `Bearer ${token}` };
   });
 
   it('should return a list of submissions', async () => {
@@ -50,7 +50,9 @@ describe('api/v1/submissions', () => {
   });
 
   it('should return a submission', async () => {
-    const response = await app.request(`/api/v1/submissions/${submissionId}`);
+    const response = await app.request(`/api/v1/submissions/${submissionId}`, {
+      headers,
+    });
     expect(response.status).toBe(200);
     const data = await response.json();
     const { data: submission } = v.parse(SubmissionGetJSON, data);
@@ -81,6 +83,7 @@ describe('api/v1/submissions', () => {
   it('should submit a submission', async () => {
     const response = await app.request(`/api/v1/submissions/${submissionId}`, {
       method: 'POST',
+      headers,
     });
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -93,11 +96,15 @@ describe('api/v1/submissions', () => {
   it('should delete a submission', async () => {
     const response = await app.request(`/api/v1/submissions/${submissionId}`, {
       method: 'DELETE',
+      headers,
     });
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
 
     {
-      const response = await app.request(`/api/v1/submissions/${submissionId}`);
+      const response = await app.request(
+        `/api/v1/submissions/${submissionId}`,
+        { headers },
+      );
       expect(response.status).toBe(404);
     }
   });

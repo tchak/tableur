@@ -53,6 +53,7 @@ model Session {
   organizationId String?   @map("organization_id") @db.Uuid
   data           Json
 
+
   user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
@@ -109,13 +110,30 @@ model Team {
   deletedAt      DateTime? @map("deleted_at")
   organizationId String    @map("organization_id") @db.Uuid
 
-  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   submissions  Submission[]
   users        TeamMembership[]
+  tables       TableMembership[]
+  rows         RowMembership[]
 
   @@index([organizationId])
   @@index([deletedAt])
   @@map("teams")
+}
+
+model OrganizationMembership {
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+  userId         String    @map("user_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizationId])
+  @@index([deletedAt])
+  @@map("organization_memberships")
 }
 
 model TeamMembership {
@@ -133,19 +151,35 @@ model TeamMembership {
   @@map("team_memberships")
 }
 
-model OrganizationMembership {
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
-  userId         String    @map("user_id") @db.Uuid
-  organizationId String    @map("organization_id") @db.Uuid
+model TableMembership {
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  teamId    String    @map("team_id") @db.Uuid
+  tableId   String    @map("table_id") @db.Uuid
+  condition Json?
 
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  table Table @relation(fields: [tableId], references: [id], onDelete: Cascade)
 
-  @@id([userId, organizationId])
+  @@id([teamId, tableId])
   @@index([deletedAt])
-  @@map("organization_memberships")
+  @@map("table_memberships")
+}
+
+model RowMembership {
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  teamId    String    @map("team_id") @db.Uuid
+  rowId     String    @map("row_id") @db.Uuid
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  row  Row  @relation(fields: [rowId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, rowId])
+  @@index([deletedAt])
+  @@map("row_memberships")
 }
 
 model SubmissionMembership {
@@ -188,10 +222,12 @@ model Table {
   options      ChoiceOption[]
   rows         Row[]
 
-  forms    Form[]
-  fields   FormField[]
+  forms  Form[]
+  fields FormField[]
 
   cells Cell[]
+
+  teams TableMembership[]
 
   @@unique([organizationId, number])
   @@index([deletedAt])
@@ -264,10 +300,11 @@ model Row {
   data       Json?
   tableId    String    @map("table_id") @db.Uuid
 
-  table      Table       @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  table      Table           @relation(fields: [tableId], references: [id], onDelete: Cascade)
   cells      Cell[]
-  submission Submission?
   comments   Comment[]
+  submission Submission?
+  teams      RowMembership[]
 
   @@unique([tableId, number])
   @@index([deletedAt])
@@ -309,7 +346,7 @@ model Cell {
 }
 
 model Form {
-  id          String    @db.Uuid @id @default(uuid())
+  id          String    @id @default(uuid()) @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")

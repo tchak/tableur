@@ -1,18 +1,9 @@
 import { Hono } from 'hono';
 import { describeRoute } from 'hono-openapi';
 import { resolver, validator } from 'hono-openapi/valibot';
+import * as v from 'valibot';
 
-import { auth, canAccess, checkOrganization } from '~/services/auth';
 import { env } from '~/services/env';
-import { handlePrismaError } from './error.types';
-import {
-  organizationCreate,
-  organizationDelete,
-  organizationGet,
-  organizationList,
-  organizationPathList,
-  organizationUpdate,
-} from './organization.db';
 import {
   OrganizationCreateInput,
   OrganizationGetJSON,
@@ -20,12 +11,12 @@ import {
   OrganizationParams,
   OrganizationUpdateInput,
 } from './organization.types';
+import { client } from './router';
 
 const organizations = new Hono();
 const organization = new Hono();
 
 organizations
-  .use(auth)
   .get(
     '/',
     describeRoute({
@@ -43,21 +34,23 @@ organizations
       validateResponse: env.NODE_ENV == 'test',
     }),
     async (c) => {
-      const { userId } = c.var;
-      const data = await organizationList({ userId });
+      const data = await client.organization.list(
+        {},
+        { context: { request: c.req.raw } },
+      );
       return c.json({ data, meta: { total: data.length } });
     },
   )
   .post('/', validator('json', OrganizationCreateInput), async (c) => {
-    const { userId } = c.var;
     const input = c.req.valid('json');
-    const data = await organizationCreate({ userId }, input);
+    const data = await client.organization.create(input, {
+      context: { request: c.req.raw },
+    });
     c.header('Location', `/api/v1/organizations/${data.id}`);
     return c.json({ data }, { status: 201 });
   });
 
 organization
-  .use(auth, canAccess(checkOrganization))
   .get(
     '/',
     describeRoute({
@@ -77,29 +70,38 @@ organization
     validator('param', OrganizationParams),
     async (c) => {
       const params = c.req.valid('param');
-      const data = await organizationGet(params).catch(handlePrismaError);
+      const data = await client.organization.get(params, {
+        context: { request: c.req.raw },
+      });
       return c.json({ data });
     },
   )
   .patch(
     '/',
-    validator('json', OrganizationUpdateInput),
+    validator('json', v.omit(OrganizationUpdateInput, ['organizationId'])),
     validator('param', OrganizationParams),
     async (c) => {
       const params = c.req.valid('param');
       const input = c.req.valid('json');
-      await organizationUpdate(params, input).catch(handlePrismaError);
+      await client.organization.update(
+        { ...params, ...input },
+        { context: { request: c.req.raw } },
+      );
       return c.body(null, { status: 204 });
     },
   )
   .delete('/', validator('param', OrganizationParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await organizationDelete(params).catch(handlePrismaError);
-    return c.json({ data });
+    await client.organization.delete(params, {
+      context: { request: c.req.raw },
+    });
+    return c.body(null, { status: 204 });
   })
   .get('/paths', validator('param', OrganizationParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await organizationPathList(params);
+    const data = await client.organization.pathList(params, {
+      context: { request: c.req.raw },
+    });
     return c.json({ data });
   });
 

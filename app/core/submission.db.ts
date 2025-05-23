@@ -1,19 +1,16 @@
-import * as v from 'valibot';
+import { submissionFind } from '~/services/auth';
 import { prisma } from '~/services/db';
+import { authenticated } from '~/services/rpc';
 
-import type {
-  StartParams,
-  SubmissionJSON,
-  SubmissionParams,
-} from './submission.types';
-import { DeletedOutput, type DeletedInput } from './types';
-import { UserParams } from './user.types';
+import { StartParams, SubmissionParams } from './submission.types';
 
-export async function submissionList({
-  userId,
-}: UserParams): Promise<SubmissionJSON[]> {
+const submissionList = authenticated.handler(async ({ context }) => {
+  context.check('submission', 'list');
   const submissions = await prisma.submission.findMany({
-    where: { deletedAt: null, users: { some: { userId, deletedAt: null } } },
+    where: {
+      deletedAt: null,
+      users: { some: { userId: context.user.id, deletedAt: null } },
+    },
     select: {
       id: true,
       state: true,
@@ -29,124 +26,137 @@ export async function submissionList({
     }
     return { ...submission, state: 'draft', submittedAt: null };
   });
-}
+});
 
-export async function submissionGet({
-  submissionId,
-}: SubmissionParams): Promise<SubmissionJSON> {
-  const { submittedAt, state, ...submission } =
-    await prisma.submission.findUniqueOrThrow({
+const submissionGet = authenticated
+  .input(SubmissionParams)
+  .handler(async ({ context, input }) => {
+    const data = await submissionFind(input.submissionId);
+    context.check('submission', 'read', data);
+    const { submittedAt, state, ...submission } =
+      await prisma.submission.findUniqueOrThrow({
+        where: {
+          id: input.submissionId,
+          deletedAt: null,
+          form: { deletedAt: null, table: { deletedAt: null } },
+        },
+        select: {
+          id: true,
+          state: true,
+          number: true,
+          submittedAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    if (state == 'submitted' && submittedAt) {
+      return { ...submission, state, submittedAt };
+    }
+    return { ...submission, state: 'draft', submittedAt: null };
+  });
+
+const submissionStart = authenticated
+  .input(StartParams)
+  .handler(async ({ context, input }) => {
+    context.check('submission', 'start');
+    const form = await prisma.form.findFirstOrThrow({
       where: {
-        id: submissionId,
+        paths: { some: { path: input.path } },
         deletedAt: null,
-        form: { deletedAt: null, table: { deletedAt: null } },
+        table: { deletedAt: null, organization: { deletedAt: null } },
       },
-      select: {
-        id: true,
-        state: true,
-        number: true,
-        submittedAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: { id: true, tableId: true },
     });
-  if (state == 'submitted' && submittedAt) {
-    return { ...submission, state, submittedAt };
-  }
-  return { ...submission, state: 'draft', submittedAt: null };
-}
-
-export async function submissionStart(
-  { userId }: UserParams,
-  { path }: StartParams,
-): Promise<SubmissionJSON> {
-  const form = await prisma.form.findFirstOrThrow({
-    where: {
-      paths: { some: { path } },
-      deletedAt: null,
-      table: { deletedAt: null, organization: { deletedAt: null } },
-    },
-    select: { id: true, tableId: true },
+    const submission = await prisma.$transaction(async (tx) => {
+      const sequence = await tx.tableRowSequence.upsert({
+        where: { tableId: form.tableId },
+        update: { lastRowNumber: { increment: 1 } },
+        create: { tableId: form.tableId },
+        select: { lastRowNumber: true },
+      });
+      return prisma.submission.create({
+        data: {
+          number: sequence.lastRowNumber,
+          formId: form.id,
+          users: { create: { userId: context.user.id } },
+        },
+        select: {
+          id: true,
+          number: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    });
+    return { ...submission, state: 'draft', submittedAt: null };
   });
-  const submission = await prisma.$transaction(async (tx) => {
-    const sequence = await tx.tableRowSequence.upsert({
-      where: { tableId: form.tableId },
-      update: { lastRowNumber: { increment: 1 } },
-      create: { tableId: form.tableId },
-      select: { lastRowNumber: true },
+
+const submissionSubmit = authenticated
+  .input(SubmissionParams)
+  .handler(async ({ context, input }) => {
+    const submission = await submissionFind(input.submissionId);
+    context.check('submission', 'submit', submission);
+
+    const { number, form } = await prisma.submission.findUniqueOrThrow({
+      where: {
+        id: input.submissionId,
+        deletedAt: null,
+        form: {
+          deletedAt: null,
+          table: { deletedAt: null, organization: { deletedAt: null } },
+        },
+      },
+      select: { number: true, form: { select: { tableId: true } } },
     });
-    return prisma.submission.create({
+    const submittedAt = new Date();
+    const sub = await prisma.submission.update({
+      where: {
+        id: input.submissionId,
+        deletedAt: null,
+        form: {
+          deletedAt: null,
+          table: { deletedAt: null, organization: { deletedAt: null } },
+        },
+      },
       data: {
-        number: sequence.lastRowNumber,
-        formId: form.id,
-        users: { create: { userId } },
+        state: 'submitted',
+        submittedAt,
+        row: { create: { number, tableId: form.tableId } },
       },
       select: {
         id: true,
-        number: true,
         createdAt: true,
         updatedAt: true,
+        number: true,
       },
     });
-  });
-  return { ...submission, state: 'draft', submittedAt: null };
-}
-
-export async function submissionSubmit({
-  submissionId,
-}: SubmissionParams): Promise<SubmissionJSON> {
-  const { number, form } = await prisma.submission.findUniqueOrThrow({
-    where: {
-      id: submissionId,
-      deletedAt: null,
-      form: {
-        deletedAt: null,
-        table: { deletedAt: null, organization: { deletedAt: null } },
-      },
-    },
-    select: { number: true, form: { select: { tableId: true } } },
-  });
-  const submittedAt = new Date();
-  const submission = await prisma.submission.update({
-    where: {
-      id: submissionId,
-      deletedAt: null,
-      form: {
-        deletedAt: null,
-        table: { deletedAt: null, organization: { deletedAt: null } },
-      },
-    },
-    data: {
+    return {
+      ...sub,
       state: 'submitted',
-      submittedAt,
-      row: { create: { number, tableId: form.tableId } },
-    },
-    select: {
-      id: true,
-      createdAt: true,
-      updatedAt: true,
-      number: true,
-    },
+      submittedAt: submittedAt.toISOString(),
+    };
   });
-  return {
-    ...submission,
-    state: 'submitted',
-    submittedAt: submittedAt.toISOString(),
-  };
-}
 
-export async function submissionDelete({ submissionId }: SubmissionParams) {
-  const submission: DeletedInput = await prisma.submission.update({
-    where: {
-      id: submissionId,
-      deletedAt: null,
-      form: {
+const submissionDelete = authenticated
+  .input(SubmissionParams)
+  .handler(async ({ context, input }) => {
+    const submission = await submissionFind(input.submissionId);
+    context.check('submission', 'write', submission);
+    await prisma.submission.update({
+      where: {
+        id: input.submissionId,
         deletedAt: null,
-        table: { deletedAt: null, organization: { deletedAt: null } },
+        form: { deletedAt: null },
       },
-    },
-    data: { deletedAt: new Date() },
-    select: { id: true, deletedAt: true },
+      data: { deletedAt: new Date() },
+      select: { id: true, deletedAt: true },
+    });
   });
-  return v.parse(DeletedOutput, submission);
-}
+
+export const router = {
+  get: submissionGet,
+  list: submissionList,
+  start: submissionStart,
+  delete: submissionDelete,
+  submit: submissionSubmit,
+};

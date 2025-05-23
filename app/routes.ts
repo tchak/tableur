@@ -16,4 +16,5 @@ export default [
     route('organizations/:organizationId', 'routes/organization.tsx'),
   ]),
   route('logout', 'routes/logout.tsx'),
+  route('rpc', 'routes/rpc.ts'),
 ] satisfies RouteConfig;

@@ -1,178 +1,316 @@
-import { createMiddleware } from 'hono/factory';
-import { HTTPException } from 'hono/http-exception';
-import { jwtVerify, SignJWT } from 'jose';
+import { createPermix, type PermixDefinition } from 'permix';
 
 import { prisma } from './db';
-import { env } from './env';
 
-export interface Env {
-  Variables: {
-    userId: string;
+export interface User {
+  id: string;
+  email: string;
+  currentOrganizationId: string | null;
+  organizationIds: Set<string>;
+  teamIds: Set<string>;
+}
+
+interface Organization {
+  organizationId: string;
+}
+
+interface Table {
+  organizationId: string;
+  teamIds: Set<string>;
+}
+
+interface Row {
+  organizationId: string;
+  teamIds: Set<string>;
+}
+
+interface Form {
+  organizationId: string;
+  tableId: string;
+  teamIds: Set<string>;
+}
+
+interface Submission {
+  organizationId: string | null;
+  teamId: string | null;
+  userIds: Set<string>;
+}
+
+interface Comment {
+  userId: string;
+  organizationId: string | null;
+  teamId: string | null;
+}
+
+export async function userFind(
+  userId: string,
+  currentOrganizationId?: string,
+): Promise<User> {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId, deletedAt: null },
+    select: {
+      email: true,
+      organizations: {
+        where: { deletedAt: null },
+        select: { organizationId: true },
+      },
+      teams: { where: { deletedAt: null }, select: { teamId: true } },
+    },
+  });
+  const organizationIds = new Set(
+    user.organizations.map(({ organizationId }) => organizationId),
+  );
+  return {
+    id: userId,
+    email: user.email,
+    currentOrganizationId: currentOrganizationId
+      ? organizationIds.has(currentOrganizationId)
+        ? currentOrganizationId
+        : null
+      : null,
+    organizationIds,
+    teamIds: new Set(user.teams.map(({ teamId }) => teamId)),
   };
 }
 
-export const auth = createMiddleware<Env>(async (c, next) => {
-  const header = c.req.header('authorization');
-  if (header) {
-    const token = extractBearerToken(header);
-    const userId = await verifyAuthToken(token);
-    c.set('userId', userId);
-  }
-  return next();
-});
-
-interface AuthParams {
-  organizationId?: string;
-  tableId?: string;
-  formId?: string;
-}
-
-export const canAccess = (
-  check: (userId: string, params: AuthParams) => Promise<boolean>,
-) =>
-  createMiddleware<Env>(async (c, next) => {
-    const { userId } = c.var;
-    if (!userId) {
-      throw new HTTPException(401, { message: 'Unauthorized' });
-    }
-    const ok = await check(userId, c.req.param());
-    if (ok) {
-      return next();
-    }
-    throw new HTTPException(403, { message: 'Forbidden' });
-  });
-
-export async function checkOrganization(userId: string, params: AuthParams) {
-  if (!params.organizationId) {
-    throw new HTTPException(400, { message: 'Missing organizationId' });
-  }
-  const ok = await prisma.organizationMembership.findUnique({
+export async function tableFind(tableId: string): Promise<Table> {
+  const table = await prisma.table.findUniqueOrThrow({
     where: {
-      userId_organizationId: { userId, organizationId: params.organizationId },
-      deletedAt: null,
+      id: tableId,
       organization: { deletedAt: null },
-      user: { deletedAt: null },
     },
-    select: { organizationId: true },
+    select: {
+      organizationId: true,
+      teams: { where: { deletedAt: null }, select: { teamId: true } },
+    },
   });
-  return !!ok;
+  return {
+    organizationId: table.organizationId,
+    teamIds: new Set(table.teams.map((team) => team.teamId)),
+  };
 }
 
-export async function checkTable(userId: string, params: AuthParams) {
-  if (!params.tableId) {
-    throw new HTTPException(400, { message: 'Missing tableId' });
-  }
-  const ok = await prisma.table.findUnique({
+export async function formFind(formId: string): Promise<Form> {
+  const { table } = await prisma.form.findUniqueOrThrow({
     where: {
-      id: params.tableId,
-      deletedAt: null,
-      organization: { deletedAt: null, users: { some: { userId } } },
+      id: formId,
+      table: { deletedAt: null, organization: { deletedAt: null } },
     },
-    select: { id: true },
-  });
-  return !!ok;
-}
-
-export async function checkForm(userId: string, params: AuthParams) {
-  if (!params.formId) {
-    throw new HTTPException(400, { message: 'Missing formId' });
-  }
-  const ok = await prisma.form.findUnique({
-    where: {
-      id: params.formId,
-      deletedAt: null,
+    select: {
       table: {
-        deletedAt: null,
-        organization: { deletedAt: null, users: { some: { userId } } },
+        select: {
+          id: true,
+          organizationId: true,
+          teams: { where: { deletedAt: null }, select: { teamId: true } },
+        },
       },
     },
-    select: { id: true },
   });
-  return !!ok;
+  return {
+    organizationId: table.organizationId,
+    tableId: table.id,
+    teamIds: new Set(table.teams.map((team) => team.teamId)),
+  };
 }
 
-export async function createAuthToken(userId: string, expires = '200 days') {
-  const authToken = await prisma.authToken.create({
-    data: { userId },
-    select: { id: true },
-  });
-  return createJWT(userId, {
-    jti: authToken.id,
-    issuer: 'urn:solaris:server',
-    audience: 'urn:solaris:server',
-    expires,
-  });
-}
-
-function extractBearerToken(header: string) {
-  const tokenMatch = header.match(/^Bearer\s+(.+)$/);
-  if (!tokenMatch || !tokenMatch[1]) {
-    throw new HTTPException(400, {
-      message: 'Invalid Authorization header format',
-    });
-  }
-  return tokenMatch[1];
-}
-
-export async function verifyAuthToken(token: string): Promise<string> {
-  const payload = await verifyJWT(token, {
-    issuer: 'urn:solaris:server',
-    audience: 'urn:solaris:server',
-    maxTokenAge: '1 year',
-  });
-  const authToken = await prisma.authToken.findUnique({
+export async function submissionFind(
+  submissionId: string,
+): Promise<Submission> {
+  const { users, team } = await prisma.submission.findUniqueOrThrow({
     where: {
-      id: payload.jti,
-      user: { id: payload.subject, deletedAt: null },
+      id: submissionId,
+      form: {
+        deletedAt: null,
+        table: { deletedAt: null, organization: { deletedAt: null } },
+      },
     },
-    select: { userId: true },
+    select: {
+      team: { select: { id: true, organizationId: true } },
+      users: { where: { deletedAt: null }, select: { userId: true } },
+    },
   });
-  if (authToken) {
-    return authToken.userId;
-  }
-  throw new HTTPException(401, { message: 'Unauthorized' });
+  return {
+    userIds: new Set(users.map((user) => user.userId)),
+    teamId: team?.id ?? null,
+    organizationId: team?.organizationId ?? null,
+  };
 }
 
-const secret = new TextEncoder().encode(env.JWT_SECRET_KEY);
-const alg = 'HS256';
+export async function rowFind(rowId: string): Promise<Row> {
+  const { table, teams } = await prisma.row.findUniqueOrThrow({
+    where: {
+      id: rowId,
+      table: { deletedAt: null, organization: { deletedAt: null } },
+      submission: null,
+    },
+    select: {
+      table: { select: { id: true, organizationId: true } },
+      teams: { where: { deletedAt: null }, select: { teamId: true } },
+    },
+  });
+  return {
+    organizationId: table.organizationId,
+    teamIds: new Set(teams.map((team) => team.teamId)),
+  };
+}
 
-async function createJWT(
-  subject: string,
-  {
-    jti,
-    issuer,
-    audience,
-    expires,
-  }: {
-    jti: string;
-    issuer: string;
-    audience: string;
-    expires: string;
+export async function commentFind(commentId: string): Promise<Comment> {
+  const {
+    userId,
+    row: { table },
+  } = await prisma.comment.findUniqueOrThrow({
+    where: {
+      id: commentId,
+      row: { table: { deletedAt: null, organization: { deletedAt: null } } },
+    },
+    select: {
+      userId: true,
+      row: { select: { table: { select: { organizationId: true } } } },
+    },
+  });
+  return {
+    userId,
+    organizationId: table.organizationId,
+    teamId: null,
+  };
+}
+
+export type Definition = PermixDefinition<{
+  import: {
+    action: 'create';
+  };
+  organization: {
+    dataType: Organization;
+    action: 'read' | 'write' | 'create' | 'createTable' | 'list';
+  };
+  table: {
+    dataType: Table;
+    action: 'read' | 'write' | 'createRow' | 'createForm';
+  };
+  form: {
+    dataType: Form;
+    action: 'read' | 'write';
+  };
+  submission: {
+    dataType: Submission;
+    action: 'read' | 'write' | 'start' | 'submit' | 'comment' | 'list';
+  };
+  row: {
+    dataType: Row;
+    action: 'read' | 'write';
+  };
+  comment: {
+    dataType: Comment;
+    action: 'read' | 'write';
+  };
+}>;
+
+const permix = createPermix<Definition>();
+
+const anonymousPermissions = permix.template({
+  import: { create: false },
+  organization: {
+    list: false,
+    read: false,
+    write: false,
+    create: false,
+    createTable: false,
   },
-) {
-  const jwt = new SignJWT()
-    .setProtectedHeader({ alg })
-    .setIssuedAt()
-    .setJti(jti)
-    .setSubject(subject)
-    .setAudience(audience)
-    .setIssuer(issuer)
-    .setExpirationTime(expires);
-  return jwt.sign(secret);
-}
+  table: {
+    read: false,
+    write: false,
+    createRow: false,
+    createForm: false,
+  },
+  form: {
+    read: true,
+    write: false,
+  },
+  submission: {
+    list: false,
+    read: false,
+    write: false,
+    start: true,
+    submit: false,
+    comment: false,
+  },
+  row: {
+    read: false,
+    write: false,
+  },
+  comment: {
+    read: false,
+    write: false,
+  },
+});
 
-async function verifyJWT(
-  token: string,
-  options: { audience: string; issuer: string; maxTokenAge: string },
-): Promise<{ subject: string; jti: string }> {
-  try {
-    const { payload } = await jwtVerify(token, secret, {
-      ...options,
-      algorithms: [alg],
-    });
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return { subject: payload.sub!, jti: payload.jti! };
-  } catch (error) {
-    throw new HTTPException(401, { message: 'Unauthorized', cause: error });
+const userPermissions = permix.template((user: User) => {
+  return {
+    import: { create: true },
+    organization: {
+      list: true,
+      create: true,
+      read: (organization) =>
+        user.organizationIds.has(organization.organizationId),
+      write: (organization) =>
+        user.organizationIds.has(organization.organizationId),
+      createTable: (organization) =>
+        user.organizationIds.has(organization.organizationId),
+    },
+    table: {
+      write: (table) => user.organizationIds.has(table.organizationId),
+      createForm: (table) => user.organizationIds.has(table.organizationId),
+      read: (table) =>
+        user.organizationIds.has(table.organizationId) ||
+        user.teamIds.intersection(table.teamIds).size > 0,
+      createRow: (table) =>
+        user.organizationIds.has(table.organizationId) ||
+        user.teamIds.intersection(table.teamIds).size > 0,
+    },
+    form: {
+      write: (form) => user.organizationIds.has(form.organizationId),
+      read: (form) =>
+        user.organizationIds.has(form.organizationId) ||
+        user.teamIds.intersection(form.teamIds).size > 0,
+    },
+    submission: {
+      start: true,
+      list: true,
+      write: (submission) => submission.userIds.has(user.id),
+      submit: (submission) => submission.userIds.has(user.id),
+      read: (submission) =>
+        submission.userIds.has(user.id) ||
+        (submission.teamId ? user.teamIds.has(submission.teamId) : false) ||
+        (submission.organizationId
+          ? user.organizationIds.has(submission.organizationId)
+          : false),
+      comment: (submission) =>
+        submission.userIds.has(user.id) ||
+        (submission.teamId ? user.teamIds.has(submission.teamId) : false),
+    },
+    row: {
+      read: (row) =>
+        row.teamIds.intersection(user.teamIds).size > 0 ||
+        user.organizationIds.has(row.organizationId),
+      write: (row) =>
+        row.teamIds.intersection(user.teamIds).size > 0 ||
+        user.organizationIds.has(row.organizationId),
+    },
+    comment: {
+      write: (comment) => comment.userId == user.id,
+      read: (comment) =>
+        comment.userId == user.id ||
+        (comment.teamId ? user.teamIds.has(comment.teamId) : false) ||
+        (comment.organizationId
+          ? user.organizationIds.has(comment.organizationId)
+          : false),
+    },
+  };
+});
+
+export function permissions(user: User | null) {
+  if (user) {
+    return userPermissions(user);
   }
+  return anonymousPermissions();
 }

@@ -12,14 +12,14 @@ import {
 } from './types';
 
 export const RowCreateInput = v.object({
+  tableId: ID,
   data: v.optional(NewData),
 });
-export type RowCreateInput = v.InferInput<typeof RowCreateInput>;
 
 export const RowUpdateInput = v.object({
+  rowId: ID,
   data: UpdateData,
 });
-export type RowUpdateInput = v.InferInput<typeof RowUpdateInput>;
 
 export const RowOutput = v.object({
   id: ID,

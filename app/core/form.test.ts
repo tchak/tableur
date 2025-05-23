@@ -2,13 +2,10 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
-import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
-import { formCreate } from './form.db';
 import { FormCreateJSON, FormGetJSON, FormListJSON } from './form.types';
-import { organizationCreate } from './organization.db';
-import { tableCreate } from './table.db';
-import { userCreate } from './user.db';
+import { client } from './router';
+import { createTestUser } from './user.test';
 
 describe('api/v1/tables/:id/forms', () => {
   let tableId: string;
@@ -17,25 +14,29 @@ describe('api/v1/tables/:id/forms', () => {
   beforeEach(async () => {
     await prisma.organization.deleteMany();
     await prisma.user.deleteMany();
-    const user = await userCreate({ email: 'test@example.com' });
-    const organization = await organizationCreate(
-      { userId: user.id },
+
+    const user = await createTestUser();
+    headers = { authorization: user.authorization };
+
+    const table = await client.table.create(
       {
-        name: 'Test Organization',
+        organizationId: user.organizationId,
+        name: 'Test Table',
+        columns: [{ name: 'Test Column', type: 'text' }],
       },
-    );
-    const table = await tableCreate(
-      { organizationId: organization.id },
-      { name: 'Test Table', columns: [{ name: 'Test Column', type: 'text' }] },
+      { context: { user: user.user } },
     );
     tableId = table.id;
-    const form = await formCreate(
-      { tableId },
-      { name: 'Test Form', title: 'Test Section', path: 'test-form' },
+    const form = await client.form.create(
+      {
+        tableId,
+        name: 'Test Form',
+        title: 'Test Section',
+        path: 'test-form',
+      },
+      { context: { user: user.user } },
     );
     formId = form.id;
-    const token = await createAuthToken(user.id);
-    headers = { Authorization: `Bearer ${token}` };
   });
 
   it('should return a list of forms', async () => {
@@ -103,13 +104,13 @@ describe('api/v1/tables/:id/forms', () => {
       method: 'DELETE',
       headers,
     });
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
 
     {
       const response = await app.request(`/api/v1/forms/${formId}`, {
         headers,
       });
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(404);
     }
   });
 
@@ -121,6 +122,6 @@ describe('api/v1/tables/:id/forms', () => {
         name: 'Hello World!',
       }),
     });
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
   });
 });

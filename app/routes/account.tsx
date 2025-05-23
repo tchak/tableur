@@ -12,18 +12,20 @@ import { EditIcon } from 'lucide-react';
 
 import type { Route } from './+types/account';
 import { getUser, getSession } from '~/middleware/session';
-import { organizationList, organizationCreate } from '~/core/organization.db';
+import { client } from '~/core/router';
 import {
   OrganizationCreateInput,
-  OrganizationSelectInput,
+  OrganizationParams,
 } from '~/core/organization.types';
 import { parseFormData } from '~/utils';
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const user = getUser(context);
-  const organizations = await organizationList({ userId: user.id });
-  const organizationId = user.organization?.id ?? null;
-  return { organizations, organizationId };
+  const organizations = await client.organization.list(
+    {},
+    { context: { user } },
+  );
+  return { organizations, organizationId: user.currentOrganizationId };
 };
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
@@ -36,11 +38,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       if (submission.status != 'success') {
         return submission.reply();
       }
-      await organizationCreate({ userId: user.id }, submission.value);
+      await client.organization.create(submission.value, {
+        context: { user },
+      });
       break;
     }
     case 'select': {
-      const submission = parseFormData(OrganizationSelectInput, formData);
+      const submission = parseFormData(OrganizationParams, formData);
       if (submission.status == 'success') {
         const session = getSession(context);
         session.set('organizationId', submission.value.organizationId);

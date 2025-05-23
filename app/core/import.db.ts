@@ -1,7 +1,9 @@
 import { parseStream } from 'fast-csv';
 import { Readable } from 'stream';
 import type { ReadableStream as NodeReadableStream } from 'stream/web';
+import { authenticated } from '~/services/rpc';
 
+import { tableFind } from '~/services/auth';
 import { prisma } from '~/services/db';
 import {
   deleteFile,
@@ -10,121 +12,137 @@ import {
   type BytesStream,
 } from '~/services/storage';
 
-import type {
+import {
   ColumnImport,
+  detectType,
   ImportPreviewInput,
   ImportPreviewJSON,
+  parseStringValue,
 } from './import.types';
-import { detectType, parseStringValue } from './import.types';
-import type { OrganizationParams } from './organization.types';
 import { tableCreate } from './table.db';
-import type {
-  TableImportDataInput,
-  TableImportInput,
-  TableParams,
-} from './table.types';
+import { TableImportDataInput, TableImportInput } from './table.types';
 import type { Data } from './types';
 
-export async function importPreview(input: ImportPreviewInput) {
-  const [stream1, stream2] = input.file.stream().tee();
-  const preview = await parseImportPreview(stream1);
-  const { id } = await prisma.importPreview.create({
-    data: preview,
-    select: { id: true },
-  });
-  await writeFile(`import/${id}.csv`, stream2);
-  return { id, ...preview };
-}
+const importPreview = authenticated
+  .input(ImportPreviewInput)
+  .handler(async ({ context, input }) => {
+    context.check('import', 'create');
 
-export async function tableImport(
-  { organizationId }: OrganizationParams,
-  input: TableImportInput,
-) {
-  const preview = await prisma.importPreview.findUniqueOrThrow({
-    where: { id: input.importId },
-    select: { columns: true },
-  });
-  const columns: ColumnImport[] = [];
-  const mapping: Record<string, string> = {};
-  for (const { name } of preview.columns) {
-    const column = input.mapping[name];
-    if (column) {
-      mapping[name] = crypto.randomUUID();
-      columns.push(column);
-    }
-  }
-  const table = await tableCreate({ organizationId }, { name: input.name });
-  await prisma.column.createMany({
-    data: columns.map((column, position) => ({
-      ...column,
-      id: mapping[column.name] as string,
-      tableId: table.id,
-      position: position + 1,
-    })),
-  });
-  await tableImportData(
-    { tableId: table.id },
-    { importId: input.importId, mapping },
-  );
-  return table;
-}
-
-export async function tableImportData(
-  { tableId }: TableParams,
-  input: TableImportDataInput,
-) {
-  await prisma.importPreview.findUniqueOrThrow({
-    where: { id: input.importId },
-  });
-  const tableColumns = await prisma.column.findMany({
-    where: {
-      table: {
-        id: tableId,
-        deletedAt: null,
-        organization: { deletedAt: null },
-      },
-    },
-    orderBy: { position: 'asc' },
-    select: { id: true, type: true },
-  });
-  const headers = Object.fromEntries(
-    Object.entries(input.mapping).map(
-      ([header, columnId]) => [columnId, header] as const,
-    ),
-  );
-  const columns: (ColumnImport & { id: string })[] = [];
-  for (const { id, type } of tableColumns) {
-    const header = headers[id];
-    if (header && type != 'file' && type != 'choice' && type != 'choiceList') {
-      columns.push({ id, type, name: header });
-    }
-  }
-  const path = `import/${input.importId}.csv`;
-  const stream = await readFile(path);
-  const data = await parseImportData(stream, columns);
-
-  if (data.length > 0) {
-    await prisma.$transaction(async (tx) => {
-      const sequence = await tx.tableRowSequence.upsert({
-        where: { tableId },
-        update: { lastRowNumber: { increment: data.length } },
-        create: { tableId },
-        select: { lastRowNumber: true },
-      });
-      const lastRowNumber = sequence.lastRowNumber - data.length + 1;
-      await tx.row.createMany({
-        data: data.map((data, position) => ({
-          data,
-          tableId,
-          number: lastRowNumber + position,
-        })),
-      });
+    const [stream1, stream2] = input.file.stream().tee();
+    const preview = await parseImportPreview(stream1);
+    const { id } = await prisma.importPreview.create({
+      data: preview,
+      select: { id: true },
     });
-  }
-  await deleteFile(path);
-  await prisma.importPreview.delete({ where: { id: input.importId } });
-  return { rows: data.length };
-}
+    await writeFile(`import/${id}.csv`, stream2);
+    return { id, ...preview };
+  });
+
+const tableImport = authenticated
+  .input(TableImportInput)
+  .handler(async ({ context, input }) => {
+    context.check('organization', 'write', input);
+    const preview = await prisma.importPreview.findUniqueOrThrow({
+      where: { id: input.importId },
+      select: { columns: true },
+    });
+    const columns: ColumnImport[] = [];
+    const mapping: Record<string, string> = {};
+    for (const { name } of preview.columns) {
+      const column = input.mapping[name];
+      if (column) {
+        mapping[name] = crypto.randomUUID();
+        columns.push(column);
+      }
+    }
+    const table = await tableCreate.callable({ context })({
+      organizationId: input.organizationId,
+      name: input.name,
+    });
+    await prisma.column.createMany({
+      data: columns.map((column, position) => ({
+        ...column,
+        id: mapping[column.name] as string,
+        tableId: table.id,
+        position: position + 1,
+      })),
+    });
+    await tableImportData.callable({ context })({
+      tableId: table.id,
+      importId: input.importId,
+      mapping,
+    });
+    return table;
+  });
+
+const tableImportData = authenticated
+  .input(TableImportDataInput)
+  .handler(async ({ context, input }) => {
+    const table = await tableFind(input.tableId);
+    context.check('table', 'write', table);
+    await prisma.importPreview.findUniqueOrThrow({
+      where: { id: input.importId },
+    });
+    const tableColumns = await prisma.column.findMany({
+      where: {
+        table: {
+          id: input.tableId,
+          deletedAt: null,
+          organization: { deletedAt: null },
+        },
+      },
+      orderBy: { position: 'asc' },
+      select: { id: true, type: true },
+    });
+    const headers = Object.fromEntries(
+      Object.entries(input.mapping).map(
+        ([header, columnId]) => [columnId, header] as const,
+      ),
+    );
+    const columns: (ColumnImport & { id: string })[] = [];
+    for (const { id, type } of tableColumns) {
+      const header = headers[id];
+      if (
+        header &&
+        type != 'file' &&
+        type != 'choice' &&
+        type != 'choiceList'
+      ) {
+        columns.push({ id, type, name: header });
+      }
+    }
+    const path = `import/${input.importId}.csv`;
+    const stream = await readFile(path);
+    const data = await parseImportData(stream, columns);
+
+    if (data.length > 0) {
+      await prisma.$transaction(async (tx) => {
+        const sequence = await tx.tableRowSequence.upsert({
+          where: { tableId: input.tableId },
+          update: { lastRowNumber: { increment: data.length } },
+          create: { tableId: input.tableId },
+          select: { lastRowNumber: true },
+        });
+        const lastRowNumber = sequence.lastRowNumber - data.length + 1;
+        await tx.row.createMany({
+          data: data.map((data, position) => ({
+            data,
+            tableId: input.tableId,
+            number: lastRowNumber + position,
+          })),
+        });
+      });
+    }
+    await deleteFile(path);
+    await prisma.importPreview.delete({ where: { id: input.importId } });
+    return { rows: data.length };
+  });
+
+export const router = {
+  preview: importPreview,
+  table: tableImport,
+  tableData: tableImportData,
+};
 
 async function parseImportPreview(stream: BytesStream) {
   const [stream1, stream2] = stream.tee();

@@ -1,40 +1,116 @@
-import * as v from 'valibot';
+import { rowFind, tableFind } from '~/services/auth';
 import { prisma } from '~/services/db';
 
-import type {
-  RowCreateInput,
-  RowGetInput,
-  RowInput,
-  RowParams,
-  RowUpdateInput,
-} from './row.types';
-import { RowGetOutput, RowOutput } from './row.types';
-import type { TableParams } from './table.types';
-import { DeletedOutput, type DeletedInput } from './types';
+import { authenticated } from '~/services/rpc';
+import { RowCreateInput, RowParams, RowUpdateInput } from './row.types';
+import { TableParams } from './table.types';
 
-export async function rowCreate(
-  { tableId }: TableParams,
-  { data }: RowCreateInput,
-) {
-  const row: RowInput = await prisma.$transaction(async (tx) => {
-    const sequence = await tx.tableRowSequence.upsert({
-      where: { tableId },
-      update: { lastRowNumber: { increment: 1 } },
-      create: { tableId },
-      select: { lastRowNumber: true },
+const rowCreate = authenticated
+  .input(RowCreateInput)
+  .handler(async ({ context, input }) => {
+    const table = await tableFind(input.tableId);
+    context.check('table', 'createRow', table);
+    return prisma.$transaction(async (tx) => {
+      const sequence = await tx.tableRowSequence.upsert({
+        where: { tableId: input.tableId },
+        update: { lastRowNumber: { increment: 1 } },
+        create: { tableId: input.tableId },
+        select: { lastRowNumber: true },
+      });
+      return prisma.row.create({
+        data: {
+          number: sequence.lastRowNumber,
+          table: {
+            connect: {
+              id: input.tableId,
+              deletedAt: null,
+              organization: { deletedAt: null },
+            },
+          },
+          data: input.data || {},
+        },
+        select: {
+          id: true,
+          number: true,
+          data: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     });
-    return prisma.row.create({
-      data: {
-        number: sequence.lastRowNumber,
-        table: {
-          connect: {
-            id: tableId,
-            deletedAt: null,
-            organization: { deletedAt: null },
+  });
+
+const rowGet = authenticated
+  .input(RowParams)
+  .handler(async ({ context, input }) => {
+    const row = await rowFind(input.rowId);
+    context.check('row', 'read', row);
+    return prisma.row.findUniqueOrThrow({
+      where: { id: input.rowId, deletedAt: null },
+      select: {
+        id: true,
+        number: true,
+        data: true,
+        createdAt: true,
+        updatedAt: true,
+        submission: {
+          select: {
+            id: true,
+            number: true,
+            state: true,
+            submittedAt: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
-        data: data || {},
+        table: {
+          select: {
+            id: true,
+            number: true,
+            name: true,
+            description: true,
+            createdAt: true,
+            updatedAt: true,
+            columns: {
+              where: { deletedAt: null },
+              orderBy: { position: 'asc' },
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true,
+                options: {
+                  orderBy: { position: 'asc' },
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
+    });
+  });
+
+const rowList = authenticated
+  .input(TableParams)
+  .handler(async ({ context, input }) => {
+    const table = await tableFind(input.tableId);
+    context.check('table', 'read', table);
+    return prisma.row.findMany({
+      where: {
+        deletedAt: null,
+        table: {
+          id: input.tableId,
+          deletedAt: null,
+          organization: { deletedAt: null },
+        },
+      },
+      orderBy: { number: 'asc' },
+      take: 100,
       select: {
         id: true,
         number: true,
@@ -44,131 +120,43 @@ export async function rowCreate(
       },
     });
   });
-  return v.parse(RowOutput, row);
-}
 
-export async function rowGet({ tableId, rowId }: RowParams) {
-  const row: RowGetInput = await prisma.row.findUniqueOrThrow({
-    where: {
-      id: rowId,
-      deletedAt: null,
-      table: {
-        id: tableId,
-        deletedAt: null,
-        organization: { deletedAt: null },
-      },
-    },
-    select: {
-      id: true,
-      number: true,
-      data: true,
-      createdAt: true,
-      updatedAt: true,
-      submission: {
-        select: {
-          id: true,
-          number: true,
-          state: true,
-          submittedAt: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      },
-      table: {
-        select: {
-          id: true,
-          number: true,
-          name: true,
-          description: true,
-          createdAt: true,
-          updatedAt: true,
-          columns: {
-            where: { deletedAt: null },
-            orderBy: { position: 'asc' },
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              createdAt: true,
-              updatedAt: true,
-              options: {
-                orderBy: { position: 'asc' },
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+const rowDelete = authenticated
+  .input(RowParams)
+  .handler(async ({ context, input }) => {
+    const row = await rowFind(input.rowId);
+    context.check('row', 'write', row);
+    const deletedAt = new Date();
+    await prisma.row.update({
+      where: { id: input.rowId, deletedAt: null },
+      data: { deletedAt },
+      select: { id: true, deletedAt: true },
+    });
+    return { id: input.rowId, deletedAt };
   });
-  return v.parse(RowGetOutput, row);
-}
 
-export async function rowList({ tableId }: TableParams) {
-  const rows = await prisma.row.findMany({
-    where: {
-      deletedAt: null,
-      table: {
-        id: tableId,
-        deletedAt: null,
-        organization: { deletedAt: null },
+const rowUpdate = authenticated
+  .input(RowUpdateInput)
+  .handler(async ({ context, input }) => {
+    const row = await rowFind(input.rowId);
+    context.check('row', 'write', row);
+    return prisma.row.update({
+      where: { id: input.rowId, deletedAt: null },
+      data: input.data,
+      select: {
+        id: true,
+        number: true,
+        data: true,
+        createdAt: true,
+        updatedAt: true,
       },
-    },
-    orderBy: { number: 'asc' },
-    take: 100,
-    select: {
-      id: true,
-      number: true,
-      data: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    });
   });
-  return v.parse(v.array(RowOutput), rows);
-}
 
-export async function rowDelete({ tableId, rowId }: RowParams) {
-  const row: DeletedInput = await prisma.row.update({
-    where: {
-      id: rowId,
-      deletedAt: null,
-      table: {
-        id: tableId,
-        deletedAt: null,
-        organization: { deletedAt: null },
-      },
-    },
-    data: { deletedAt: new Date() },
-    select: { id: true, deletedAt: true },
-  });
-  return v.parse(DeletedOutput, row);
-}
-
-export async function rowUpdate(
-  { tableId, rowId }: RowParams,
-  input: RowUpdateInput,
-) {
-  const row = await prisma.row.update({
-    where: {
-      id: rowId,
-      deletedAt: null,
-      table: {
-        id: tableId,
-        deletedAt: null,
-        organization: { deletedAt: null },
-      },
-    },
-    data: input.data,
-    select: {
-      id: true,
-      number: true,
-      data: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-  return v.parse(RowOutput, row);
-}
+export const router = {
+  get: rowGet,
+  list: rowList,
+  create: rowCreate,
+  update: rowUpdate,
+  delete: rowDelete,
+};

@@ -2,31 +2,23 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
 import { app } from '~/server/app';
-import { createAuthToken } from '~/services/auth';
 import { prisma } from '~/services/db';
-import { organizationCreate } from './organization.db';
 import {
   OrganizationGetJSON,
   OrganizationListJSON,
 } from './organization.types';
-import { userCreate } from './user.db';
+import { createTestUser } from './user.test';
 
-describe.only('api/v1/organizations', () => {
+describe('api/v1/organizations', () => {
   let organizationId: string;
   let headers: Record<string, string>;
   beforeEach(async () => {
     await prisma.organization.deleteMany();
     await prisma.user.deleteMany();
-    const user = await userCreate({ email: 'test@example.com' });
-    const organization = await organizationCreate(
-      { userId: user.id },
-      {
-        name: 'Test Organization',
-      },
-    );
-    organizationId = organization.id;
-    const token = await createAuthToken(user.id);
-    headers = { Authorization: `Bearer ${token}` };
+
+    const user = await createTestUser();
+    organizationId = user.organizationId;
+    headers = { authorization: user.authorization };
   });
 
   it('should return a list of organizations', async () => {
@@ -74,25 +66,6 @@ describe.only('api/v1/organizations', () => {
     }
   });
 
-  it('should delete an organization', async () => {
-    const response = await app.request(
-      `/api/v1/organizations/${organizationId}`,
-      {
-        method: 'DELETE',
-        headers,
-      },
-    );
-    expect(response.status).toBe(200);
-
-    {
-      const response = await app.request(
-        `/api/v1/organizations/${organizationId}`,
-        { headers },
-      );
-      expect(response.status).toBe(403);
-    }
-  });
-
   it('should update an organization', async () => {
     const response = await app.request(
       `/api/v1/organizations/${organizationId}`,
@@ -105,6 +78,25 @@ describe.only('api/v1/organizations', () => {
       },
     );
     expect(response.status).toBe(204);
+  });
+
+  it('should delete an organization', async () => {
+    const response = await app.request(
+      `/api/v1/organizations/${organizationId}`,
+      {
+        method: 'DELETE',
+        headers,
+      },
+    );
+    expect(response.status).toBe(204);
+
+    {
+      const response = await app.request(
+        `/api/v1/organizations/${organizationId}`,
+        { headers },
+      );
+      expect(response.status).toBe(404);
+    }
   });
 
   it('should list organization paths', async () => {
