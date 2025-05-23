@@ -1,9 +1,7 @@
 import { Hono } from 'hono';
-import { describeRoute } from 'hono-openapi';
-import { resolver, validator } from 'hono-openapi/valibot';
+import { validator } from 'hono-openapi/valibot';
 import * as v from 'valibot';
 
-import { env } from '~/services/env';
 import {
   FormCreateInput,
   FormGetJSON,
@@ -11,6 +9,7 @@ import {
   FormParams,
   FormUpdateInput,
 } from './form.types';
+import { describeRoute } from './openapi';
 import { client } from './router';
 import { TableParams } from './table.types';
 
@@ -22,17 +21,7 @@ forms
     '/',
     describeRoute({
       description: 'List forms',
-      responses: {
-        200: {
-          description: '',
-          content: {
-            'application/json': {
-              schema: resolver(FormListJSON),
-            },
-          },
-        },
-      },
-      validateResponse: env.NODE_ENV == 'test',
+      output: FormListJSON,
     }),
     validator('param', TableParams),
     async (c) => {
@@ -63,18 +52,8 @@ form
   .get(
     '/',
     describeRoute({
-      description: 'Get form',
-      responses: {
-        200: {
-          description: '',
-          content: {
-            'application/json': {
-              schema: resolver(FormGetJSON),
-            },
-          },
-        },
-      },
-      validateResponse: env.NODE_ENV == 'test',
+      description: 'Find form',
+      output: FormGetJSON,
     }),
     validator('param', FormParams),
     async (c) => {

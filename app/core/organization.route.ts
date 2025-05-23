@@ -1,9 +1,8 @@
 import { Hono } from 'hono';
-import { describeRoute } from 'hono-openapi';
-import { resolver, validator } from 'hono-openapi/valibot';
+import { validator } from 'hono-openapi/valibot';
 import * as v from 'valibot';
 
-import { env } from '~/services/env';
+import { describeRoute } from './openapi';
 import {
   openapi,
   OrganizationCreateInput,
@@ -20,17 +19,7 @@ organizations
     '/',
     describeRoute({
       description: 'List organizations',
-      responses: {
-        200: {
-          description: '',
-          content: {
-            'application/json': {
-              schema: resolver(openapi.list),
-            },
-          },
-        },
-      },
-      validateResponse: env.NODE_ENV == 'test',
+      output: openapi.list,
     }),
     async (c) => {
       const data = await client.organization.list(
@@ -40,31 +29,29 @@ organizations
       return c.json({ data, meta: { total: data.length } });
     },
   )
-  .post('/', validator('json', OrganizationCreateInput), async (c) => {
-    const input = c.req.valid('json');
-    const data = await client.organization.create(input, {
-      context: { request: c.req.raw },
-    });
-    c.header('Location', `/api/v1/organizations/${data.id}`);
-    return c.json({ data }, { status: 201 });
-  });
+  .post(
+    '/',
+    describeRoute({
+      description: 'Create organizations',
+      output: openapi.create,
+    }),
+    validator('json', OrganizationCreateInput),
+    async (c) => {
+      const input = c.req.valid('json');
+      const data = await client.organization.create(input, {
+        context: { request: c.req.raw },
+      });
+      c.header('Location', `/api/v1/organizations/${data.id}`);
+      return c.json({ data }, { status: 201 });
+    },
+  );
 
 organization
   .get(
     '/',
     describeRoute({
-      description: 'Find organization',
-      responses: {
-        200: {
-          description: '',
-          content: {
-            'application/json': {
-              schema: resolver(openapi.find),
-            },
-          },
-        },
-      },
-      validateResponse: env.NODE_ENV == 'test',
+      description: 'Find organizations',
+      output: openapi.find,
     }),
     validator('param', OrganizationParams),
     async (c) => {

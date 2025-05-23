@@ -1,20 +1,13 @@
-import * as v from 'valibot';
+import { implement } from '@orpc/server';
 
 import { prisma } from '~/services/db';
 import { email } from '~/services/email';
-import { base } from '~/services/rpc';
 import { generateOTP, now, timeAgo } from '~/utils';
+import { contract } from './login.contract';
 
-import { Email } from './types';
+const os = implement(contract);
 
-export const LoginRequestCreateInput = v.object({ email: Email });
-export const LoginRequestVerifyInput = v.object({
-  email: Email,
-  otp: v.pipe(v.string(), v.length(6)),
-});
-
-export const loginRequestCreate = base
-  .input(LoginRequestCreateInput)
+export const loginRequestCreate = os.loginRequestCreate
   .handler(async ({ input }) => {
     const request = await prisma.loginRequest.create({
       data: { email: input.email, otp: generateOTP() },
@@ -29,8 +22,7 @@ export const loginRequestCreate = base
   })
   .callable({ context: {} });
 
-export const loginRequestVerify = base
-  .input(LoginRequestVerifyInput)
+export const loginRequestVerify = os.loginRequestVerify
   .handler(async ({ input }) => {
     const request = await prisma.loginRequest.findUnique({
       where: {

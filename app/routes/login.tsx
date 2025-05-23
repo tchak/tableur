@@ -4,7 +4,8 @@ import { Button, Input, Link } from '@heroui/react';
 import type { Route } from './+types/login';
 
 import { unauthenticatedMiddleware, getSession } from '~/middleware/session';
-import { loginRequestCreate, LoginRequestCreateInput } from '~/core/login';
+import { loginRequestCreate } from '~/core/login';
+import { LoginRequestCreateInput } from '~/core/login.contract';
 import { parseFormData } from '~/utils';
 
 export const unstable_middleware = [unauthenticatedMiddleware];

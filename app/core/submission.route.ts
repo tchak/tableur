@@ -1,8 +1,7 @@
 import { Hono } from 'hono';
-import { describeRoute } from 'hono-openapi';
-import { resolver, validator } from 'hono-openapi/valibot';
+import { validator } from 'hono-openapi/valibot';
 
-import { env } from '~/services/env';
+import { describeRoute } from './openapi';
 import { client } from './router';
 import {
   StartParams,
@@ -19,17 +18,7 @@ submissions.get(
   '/',
   describeRoute({
     description: 'List submissions',
-    responses: {
-      200: {
-        description: '',
-        content: {
-          'application/json': {
-            schema: resolver(SubmissionListJSON),
-          },
-        },
-      },
-    },
-    validateResponse: env.NODE_ENV == 'test',
+    output: SubmissionListJSON,
   }),
   async (c) => {
     const data = await client.submission.list(
@@ -44,18 +33,8 @@ submission
   .get(
     '/',
     describeRoute({
-      description: 'Get submission',
-      responses: {
-        200: {
-          description: '',
-          content: {
-            'application/json': {
-              schema: resolver(SubmissionGetJSON),
-            },
-          },
-        },
-      },
-      validateResponse: env.NODE_ENV == 'test',
+      description: 'Find submission',
+      output: SubmissionGetJSON,
     }),
     validator('param', SubmissionParams),
     async (c) => {

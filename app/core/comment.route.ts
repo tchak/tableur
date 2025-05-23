@@ -1,15 +1,14 @@
 import { Hono } from 'hono';
-import { describeRoute } from 'hono-openapi';
-import { resolver, validator } from 'hono-openapi/valibot';
+import { validator } from 'hono-openapi/valibot';
 import * as v from 'valibot';
 
-import { env } from '~/services/env';
 import {
   CommentCreateInput,
   CommentParams,
   RowParams,
   openapi,
 } from './comment.contract';
+import { describeRoute } from './openapi';
 import { client } from './router';
 
 const comments = new Hono();
@@ -20,17 +19,7 @@ comments
     '/',
     describeRoute({
       description: 'List comments',
-      responses: {
-        200: {
-          description: '',
-          content: {
-            'application/json': {
-              schema: resolver(openapi.list),
-            },
-          },
-        },
-      },
-      validateResponse: env.NODE_ENV == 'test',
+      output: openapi.list,
     }),
     validator('param', RowParams),
     async (c) => {
@@ -43,6 +32,10 @@ comments
   )
   .post(
     '/',
+    describeRoute({
+      description: 'Create comment',
+      output: openapi.create,
+    }),
     validator('param', RowParams),
     validator('json', v.omit(CommentCreateInput, ['rowId'])),
     async (c) => {
