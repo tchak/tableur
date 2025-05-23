@@ -10,7 +10,10 @@ export async function createTestUser() {
       organizations: {
         create: {
           organization: {
-            create: { id: organizationId, name: 'Test Organization' },
+            create: {
+              id: organizationId,
+              name: 'Test Organization',
+            },
           },
         },
       },

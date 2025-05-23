@@ -68,15 +68,14 @@ const submissionStart = authenticated
       select: { id: true, tableId: true },
     });
     const submission = await prisma.$transaction(async (tx) => {
-      const sequence = await tx.tableRowSequence.upsert({
-        where: { tableId: form.tableId },
-        update: { lastRowNumber: { increment: 1 } },
-        create: { tableId: form.tableId },
+      const { lastRowNumber } = await tx.table.update({
+        where: { id: form.tableId },
+        data: { lastRowNumber: { increment: 1 } },
         select: { lastRowNumber: true },
       });
       return prisma.submission.create({
         data: {
-          number: sequence.lastRowNumber,
+          number: lastRowNumber,
           formId: form.id,
           users: { create: { userId: context.user.id } },
         },

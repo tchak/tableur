@@ -74,18 +74,18 @@ export const tableCreate = authenticated
     context.check('organization', 'createTable', input);
 
     return prisma.$transaction(async (tx) => {
-      const sequence = await tx.organizationTableSequence.upsert({
-        where: { organizationId: input.organizationId },
-        update: { lastTableNumber: { increment: 1 } },
-        create: { organizationId: input.organizationId },
+      const { lastTableNumber } = await tx.organization.update({
+        where: { id: input.organizationId },
+        data: { lastTableNumber: { increment: 1 } },
         select: { lastTableNumber: true },
       });
-      const table = await tx.table.create({
+      return tx.table.create({
         data: {
           organization: {
             connect: { id: input.organizationId, deletedAt: null },
           },
-          number: sequence.lastTableNumber,
+          number: lastTableNumber,
+          lastRowNumber: input.rows?.length ?? 0,
           name: input.name,
           //description: input.description,
           columns: {
@@ -115,12 +115,6 @@ export const tableCreate = authenticated
           updatedAt: true,
         },
       });
-      if (input.rows && input.rows.length > 0) {
-        await tx.tableRowSequence.create({
-          data: { tableId: table.id, lastRowNumber: input.rows.length },
-        });
-      }
-      return table;
     });
   });
 
@@ -183,6 +177,7 @@ const tableClone = authenticated
         createdAt: true,
         updatedAt: true,
         deletedAt: true,
+        lastRowNumber: true,
       },
     });
     const columns = await prisma.column.findMany({
@@ -203,16 +198,15 @@ const tableClone = authenticated
     });
 
     return prisma.$transaction(async (tx) => {
-      const sequence = await tx.organizationTableSequence.upsert({
-        where: { organizationId: originalTable.organizationId },
-        update: { lastTableNumber: { increment: 1 } },
-        create: { organizationId: originalTable.organizationId },
+      const { lastTableNumber } = await tx.organization.update({
+        where: { id: originalTable.organizationId },
+        data: { lastTableNumber: { increment: 1 } },
         select: { lastTableNumber: true },
       });
       return tx.table.create({
         data: {
           ...originalTable,
-          number: sequence.lastTableNumber,
+          number: lastTableNumber,
           columns: {
             createMany: {
               data: columns.map((column) => ({

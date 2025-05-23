@@ -11,15 +11,14 @@ const rowCreate = authenticated
     const table = await tableFind(input.tableId);
     context.check('table', 'createRow', table);
     return prisma.$transaction(async (tx) => {
-      const sequence = await tx.tableRowSequence.upsert({
-        where: { tableId: input.tableId },
-        update: { lastRowNumber: { increment: 1 } },
-        create: { tableId: input.tableId },
+      const { lastRowNumber } = await tx.table.update({
+        where: { id: input.tableId },
+        data: { lastRowNumber: { increment: 1 } },
         select: { lastRowNumber: true },
       });
       return prisma.row.create({
         data: {
-          number: sequence.lastRowNumber,
+          number: lastRowNumber,
           table: {
             connect: {
               id: input.tableId,

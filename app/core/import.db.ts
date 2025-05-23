@@ -118,18 +118,17 @@ const tableImportData = authenticated
 
     if (data.length > 0) {
       await prisma.$transaction(async (tx) => {
-        const sequence = await tx.tableRowSequence.upsert({
-          where: { tableId: input.tableId },
-          update: { lastRowNumber: { increment: data.length } },
-          create: { tableId: input.tableId },
+        const { lastRowNumber } = await tx.table.update({
+          where: { id: input.tableId },
+          data: { lastRowNumber: { increment: data.length } },
           select: { lastRowNumber: true },
         });
-        const lastRowNumber = sequence.lastRowNumber - data.length + 1;
+        const firstRowNumber = lastRowNumber - data.length + 1;
         await tx.row.createMany({
           data: data.map((data, position) => ({
             data,
             tableId: input.tableId,
-            number: lastRowNumber + position,
+            number: firstRowNumber + position,
           })),
         });
       });
