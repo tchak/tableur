@@ -1,6 +1,5 @@
 import * as v from 'valibot';
 
-import { ColumnType } from '~/generated/prisma';
 import {
   BooleanType,
   ChoiceListType,
@@ -13,7 +12,6 @@ import {
   Name,
   NumberType,
   TextType,
-  Timestamp,
 } from './types';
 
 const ChoiceOptionInput = v.object({
@@ -57,54 +55,10 @@ export const ColumnCreateInput = v.variant('type', [
   }),
 ]);
 
-const ChoiceOptionOutput = v.object({
+const ChoiceOptionJSON = v.object({
   id: ID,
   name: v.string(),
 });
-
-const ColumnFragment = v.object({
-  id: ID,
-  name: v.string(),
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
-});
-
-export const ColumnOutput = v.variant('type', [
-  v.object({
-    type: v.pipe(v.literal(ColumnType.text), TextType),
-    ...ColumnFragment.entries,
-  }),
-  v.object({
-    type: v.pipe(v.literal(ColumnType.number), NumberType),
-    ...ColumnFragment.entries,
-  }),
-  v.object({
-    type: v.pipe(v.literal(ColumnType.boolean), BooleanType),
-    ...ColumnFragment.entries,
-  }),
-  v.object({
-    type: v.pipe(v.literal(ColumnType.date), DateType),
-    ...ColumnFragment.entries,
-  }),
-  v.object({
-    type: v.pipe(v.literal(ColumnType.datetime), DateTimeType),
-    ...ColumnFragment.entries,
-  }),
-  v.object({
-    type: v.pipe(v.literal(ColumnType.file), FileType),
-    ...ColumnFragment.entries,
-  }),
-  v.object({
-    type: v.pipe(v.literal(ColumnType.choice), ChoiceType),
-    options: v.array(ChoiceOptionOutput),
-    ...ColumnFragment.entries,
-  }),
-  v.object({
-    type: v.pipe(v.literal(ColumnType.choiceList), ChoiceListType),
-    options: v.array(ChoiceOptionOutput),
-    ...ColumnFragment.entries,
-  }),
-]);
 
 const ColumnJSONFragment = v.object({
   id: ID,
@@ -140,14 +94,12 @@ export const ColumnJSON = v.variant('type', [
   }),
   v.object({
     type: ChoiceType,
-    options: v.array(ChoiceOptionOutput),
+    options: v.array(ChoiceOptionJSON),
     ...ColumnJSONFragment.entries,
   }),
   v.object({
     type: ChoiceListType,
-    options: v.array(ChoiceOptionOutput),
+    options: v.array(ChoiceOptionJSON),
     ...ColumnJSONFragment.entries,
   }),
 ]);
-
-export type ColumnInput = v.InferInput<typeof ColumnOutput>;

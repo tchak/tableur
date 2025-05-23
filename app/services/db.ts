@@ -44,6 +44,7 @@ const prisma = new PrismaClient().$extends({
     table: timestamps,
     row: timestamps,
     form: timestamps,
+    comment: timestamps,
     submission: {
       ...timestamps,
       state: {

@@ -1,15 +1,8 @@
 import * as v from 'valibot';
 
-import { SubmissionJSON, SubmissionOutput } from './submission.types';
-import { TableGetJSON, TableGetOutput } from './table.types';
-import {
-  Data,
-  ID,
-  ISOTimestamp,
-  NewData,
-  Timestamp,
-  UpdateData,
-} from './types';
+import { SubmissionJSON } from './submission.types';
+import { TableGetJSON } from './table.types';
+import { Data, ID, ISOTimestamp, NewData, UpdateData } from './types';
 
 export const RowCreateInput = v.object({
   tableId: ID,
@@ -21,24 +14,7 @@ export const RowUpdateInput = v.object({
   data: UpdateData,
 });
 
-export const RowOutput = v.object({
-  id: ID,
-  number: v.number(),
-  data: v.pipe(v.unknown(), Data),
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
-});
-export type RowInput = v.InferInput<typeof RowOutput>;
-
-export const RowGetOutput = v.object({
-  ...RowOutput.entries,
-  table: TableGetOutput,
-  submission: v.nullable(SubmissionOutput),
-});
-export type RowGetInput = v.InferInput<typeof RowGetOutput>;
-
-export const RowParams = v.object({ tableId: ID, rowId: ID });
-export type RowParams = v.InferOutput<typeof RowParams>;
+export const RowParams = v.object({ rowId: ID });
 
 export const RowJSON = v.object({
   id: ID,

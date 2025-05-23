@@ -37,11 +37,11 @@ const list = os.list.handler(({ context }) => {
   });
 });
 
-const create = os.create.handler(({ input: { name }, context }) => {
+const create = os.create.handler(({ input, context }) => {
   context.check('organization', 'create');
   return prisma.organization.create({
     data: {
-      name,
+      name: input.name,
       users: { create: { userId: context.user.id } },
     },
     select: { id: true, name: true, createdAt: true, updatedAt: true },

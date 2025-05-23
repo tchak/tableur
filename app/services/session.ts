@@ -3,6 +3,7 @@ import {
   type FlashSessionData,
   type Session as RRSession,
 } from 'react-router';
+import * as R from 'remeda';
 
 import { maxAge, now } from '~/utils';
 import { prisma } from './db';
@@ -58,11 +59,15 @@ export const sessionStorage = createSessionStorage<Data, FlashData>({
     return session.id;
   },
   async updateData(id, data, expires) {
-    await prisma.session.update({
+    const sessionData = R.omitBy(
+      { data, userId: data.userId, expiresAt: expires },
+      R.isNot(R.isDefined),
+    );
+    await prisma.session.upsert({
       where: { id },
-      data: data.userId
-        ? { data, userId: data.userId, expiresAt: expires }
-        : { data, expiresAt: expires },
+      update: sessionData,
+      create: sessionData,
+      select: { id: true },
     });
   },
   async deleteData(id) {

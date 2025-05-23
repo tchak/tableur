@@ -1,3 +1,5 @@
+import * as R from 'remeda';
+
 import { withForm, withTable } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { authenticated } from '~/services/rpc';
@@ -158,7 +160,10 @@ const formUpdate = authenticated
     context.check('form', 'write', context.form);
     await prisma.form.update({
       where: { id: input.formId, deletedAt: null },
-      data: { name: input.name },
+      data: R.omitBy(
+        { name: input.name, description: input.description },
+        R.isNot(R.isDefined),
+      ),
       select: { id: true },
     });
   });

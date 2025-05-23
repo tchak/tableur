@@ -1,3 +1,5 @@
+import * as R from 'remeda';
+
 import { withTable } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { authenticated } from '~/services/rpc';
@@ -83,8 +85,10 @@ export const tableCreate = authenticated
           },
           number: lastTableNumber,
           lastRowNumber: input.rows?.length ?? 0,
-          name: input.name,
-          //description: input.description,
+          ...R.omitBy(
+            { name: input.name, description: input.description },
+            R.isNot(R.isDefined),
+          ),
           columns: {
             createMany: {
               data: (input.columns ?? []).map((column, position) => ({

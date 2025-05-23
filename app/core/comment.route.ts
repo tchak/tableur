@@ -6,11 +6,11 @@ import * as v from 'valibot';
 import { env } from '~/services/env';
 import {
   CommentCreateInput,
-  CommentListJSON,
   CommentParams,
-} from './comment.types';
+  RowParams,
+  openapi,
+} from './comment.contract';
 import { client } from './router';
-import { RowParams } from './row.types';
 
 const comments = new Hono();
 const comment = new Hono();
@@ -25,7 +25,7 @@ comments
           description: '',
           content: {
             'application/json': {
-              schema: resolver(CommentListJSON),
+              schema: resolver(openapi.list),
             },
           },
         },
@@ -43,7 +43,7 @@ comments
   )
   .post(
     '/',
-    validator('param', CommentParams),
+    validator('param', RowParams),
     validator('json', v.omit(CommentCreateInput, ['rowId'])),
     async (c) => {
       const params = c.req.valid('param');
@@ -58,7 +58,7 @@ comments
 
 comment.delete('/', validator('param', CommentParams), async (c) => {
   const params = c.req.valid('param');
-  await client.comment.delete(params, { context: { request: c.req.raw } });
+  await client.comment.destroy(params, { context: { request: c.req.raw } });
   return c.body(null, { status: 204 });
 });
 

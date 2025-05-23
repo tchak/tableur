@@ -3,12 +3,11 @@ import * as v from 'valibot';
 
 import { app } from '~/server/app';
 import { prisma } from '~/services/db';
-import { CommentListJSON } from './comment.types';
+import { openapi } from './comment.contract';
 import { client } from './router';
 import { createTestUser } from './user.test';
 
-describe('api/v1/tables/:id/rows/:id/comments', () => {
-  let tableId: string;
+describe('api/v1/rows/:id/comments', () => {
   let rowId: string;
   let commentId: string;
   let headers: Record<string, string>;
@@ -19,7 +18,7 @@ describe('api/v1/tables/:id/rows/:id/comments', () => {
     const user = await createTestUser();
     headers = { authorization: user.authorization };
 
-    const table = await client.table.create(
+    await client.table.create(
       {
         organizationId: user.organizationId,
         name: 'Test Table',
@@ -28,7 +27,6 @@ describe('api/v1/tables/:id/rows/:id/comments', () => {
       },
       { context: { user: user.user } },
     );
-    tableId = table.id;
     rowId = (await prisma.row.findFirstOrThrow()).id;
     const comment = await client.comment.create(
       { rowId, body: 'Test Comment' },
@@ -38,31 +36,29 @@ describe('api/v1/tables/:id/rows/:id/comments', () => {
   });
 
   it('should return a list of comments', async () => {
-    const response = await app.request(
-      `/api/v1/tables/${tableId}/rows/${rowId}/comments`,
-      { headers },
-    );
+    const response = await app.request(`/api/v1/rows/${rowId}/comments`, {
+      headers,
+    });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: comments } = v.parse(CommentListJSON, data);
+    const { data: comments } = v.parse(openapi.list, data);
     expect(comments.length).toEqual(1);
   });
 
   it('should delete a comment', async () => {
     const response = await app.request(
-      `/api/v1/tables/${tableId}/rows/${rowId}/comments/${commentId}`,
+      `/api/v1/rows/${rowId}/comments/${commentId}`,
       { method: 'DELETE', headers },
     );
     expect(response.status).toBe(204);
 
     {
-      const response = await app.request(
-        `/api/v1/tables/${tableId}/rows/${rowId}/comments`,
-        { headers },
-      );
+      const response = await app.request(`/api/v1/rows/${rowId}/comments`, {
+        headers,
+      });
       expect(response.status).toBe(200);
       const data = await response.json();
-      const { data: comments } = v.parse(CommentListJSON, data);
+      const { data: comments } = v.parse(openapi.list, data);
       expect(comments.length).toEqual(0);
     }
   });

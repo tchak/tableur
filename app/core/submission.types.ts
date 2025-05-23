@@ -1,33 +1,10 @@
 import * as v from 'valibot';
 
-import { SubmissionState } from '~/generated/prisma';
-import { ID, ISOTimestamp, Timestamp } from './types';
-
-const SubmissionFragment = v.object({
-  id: ID,
-  number: v.number(),
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
-});
-
-export const SubmissionOutput = v.variant('state', [
-  v.object({
-    ...SubmissionFragment.entries,
-    state: v.pipe(v.enum(SubmissionState), v.literal('draft')),
-    submittedAt: v.null(),
-  }),
-  v.object({
-    ...SubmissionFragment.entries,
-    state: v.pipe(v.enum(SubmissionState), v.literal('submitted')),
-    submittedAt: Timestamp,
-  }),
-]);
-export type SubmissionInput = v.InferInput<typeof SubmissionOutput>;
+import { ID, ISOTimestamp } from './types';
 
 export const SubmissionParams = v.object({
   submissionId: ID,
 });
-export type SubmissionParams = v.InferOutput<typeof SubmissionParams>;
 
 export const StartParams = v.object({
   path: v.string(),

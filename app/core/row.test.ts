@@ -7,7 +7,7 @@ import { client } from './router';
 import { RowCreateJSON, RowGetJSON, RowListJSON } from './row.types';
 import { createTestUser } from './user.test';
 
-describe('api/v1/tables/:id/rows', () => {
+describe('api/v1/rows', () => {
   let organizationId: string;
   let tableId: string;
   let columnId: string;
@@ -46,10 +46,7 @@ describe('api/v1/tables/:id/rows', () => {
   });
 
   it('should return a row', async () => {
-    const response = await app.request(
-      `/api/v1/tables/${tableId}/rows/${rowId}`,
-      { headers },
-    );
+    const response = await app.request(`/api/v1/rows/${rowId}`, { headers });
     expect(response.status).toBe(200);
     const data = await response.json();
     const { data: row } = v.parse(RowGetJSON, data);
@@ -95,20 +92,14 @@ describe('api/v1/tables/:id/rows', () => {
   });
 
   it('should delete a row', async () => {
-    const response = await app.request(
-      `/api/v1/tables/${tableId}/rows/${rowId}`,
-      {
-        method: 'DELETE',
-        headers,
-      },
-    );
+    const response = await app.request(`/api/v1/rows/${rowId}`, {
+      method: 'DELETE',
+      headers,
+    });
     expect(response.status).toBe(200);
 
     {
-      const response = await app.request(
-        `/api/v1/tables/${tableId}/rows/${rowId}`,
-        { headers },
-      );
+      const response = await app.request(`/api/v1/rows/${rowId}`, { headers });
       expect(response.status).toBe(404);
     }
   });

@@ -36,17 +36,16 @@ organizations.route(':organizationId', organization);
 comments.route(':commentId', comment);
 submissions.route(':submissionId', submission);
 
-row.route('comments', comments);
-rows.route(':rowId', row);
-
 table.route('rows', rows);
 table.route('forms', forms);
+row.route('comments', comments);
 
 api.route('organizations', organizations);
 api.route('tables/:tableId', table);
+api.route('rows/:rowId', row);
 api.route('forms/:formId', form);
-api.route('imports', imports);
 api.route('submissions', submissions);
 api.route('start', start);
+api.route('imports', imports);
 
 export { api };

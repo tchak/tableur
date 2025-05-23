@@ -1,15 +1,8 @@
 import * as v from 'valibot';
 
-import { ColumnCreateInput, ColumnJSON, ColumnOutput } from './column.types';
+import { ColumnCreateInput, ColumnJSON } from './column.types';
 import { ColumnImport } from './import.types';
-import {
-  Description,
-  ID,
-  ISOTimestamp,
-  Name,
-  NewData,
-  Timestamp,
-} from './types';
+import { Description, ID, ISOTimestamp, Name, NewData } from './types';
 
 export const TableCreateInput = v.object({
   organizationId: ID,
@@ -32,21 +25,7 @@ const TableFragment = v.object({
   description: v.nullable(v.string()),
 });
 
-export const TableOutput = v.object({
-  ...TableFragment.entries,
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
-});
-export type TableInput = v.InferInput<typeof TableOutput>;
-
-export const TableGetOutput = v.object({
-  ...TableOutput.entries,
-  columns: v.array(ColumnOutput),
-});
-export type TableGetInput = v.InferInput<typeof TableGetOutput>;
-
 export const TableParams = v.object({ tableId: ID });
-export type TableParams = v.InferOutput<typeof TableParams>;
 
 const TableJSON = v.object({
   ...TableFragment.entries,

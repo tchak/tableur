@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 
 import { Expression } from './expression';
-import { Description, ID, ISOTimestamp, Name, Timestamp } from './types';
+import { Description, ID, ISOTimestamp, Name } from './types';
 
 export const FormCreateInput = v.object({
   tableId: ID,
@@ -25,51 +25,12 @@ export const FormUpdateInput = v.object({
 export const FormParams = v.object({
   formId: ID,
 });
-export type FormParams = v.InferOutput<typeof FormParams>;
 
 const FormFragment = v.object({
   id: ID,
   name: v.string(),
   description: v.nullable(v.string()),
 });
-
-export const FormOutput = v.object({
-  ...FormFragment.entries,
-  paths: v.pipe(
-    v.array(v.object({ path: v.string() })),
-    v.transform((paths) => paths.map(({ path }) => path)),
-  ),
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
-});
-export type FormInput = v.InferInput<typeof FormOutput>;
-
-export const FieldOutput = v.object({
-  id: ID,
-  label: v.string(),
-  description: v.nullable(v.string()),
-  required: v.boolean(),
-  condition: v.nullable(v.pipe(v.unknown(), Expression)),
-});
-
-export const SectionOutput = v.object({
-  id: ID,
-  title: v.string(),
-  condition: v.nullable(v.pipe(v.unknown(), Expression)),
-  fields: v.array(FieldOutput),
-});
-
-export const PageOutput = v.object({
-  id: ID,
-  condition: v.nullable(v.pipe(v.unknown(), Expression)),
-  sections: v.array(SectionOutput),
-});
-
-export const FormGetOutput = v.object({
-  ...FormOutput.entries,
-  pages: v.array(PageOutput),
-});
-export type FormGetInput = v.InferInput<typeof FormGetOutput>;
 
 export const FormJSON = v.object({
   ...FormFragment.entries,
@@ -107,11 +68,5 @@ export const PageJSON = v.object({
 export const FormGetJSON = v.object({
   data: v.object({ ...FormJSON.entries, pages: v.array(PageJSON) }),
 });
-
-export const FormPathOutput = v.object({
-  path: v.string(),
-  form: v.nullable(FormFragment),
-});
-export type FormPathInput = v.InferInput<typeof FormPathOutput>;
 
 export const FormCreateJSON = v.object({ data: FormJSON });
