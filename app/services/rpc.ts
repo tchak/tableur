@@ -64,28 +64,29 @@ export const base = os
     }
 
     return next({ context: { user: null } });
-  })
-  .use(async ({ context, next, errors }) => {
-    let permissionChecked = false;
-    const permix = createPermix(permissions(context.user));
-    const check: Permix<Definition>['check'] = (...params) => {
-      permissionChecked = true;
-      const hasPermission = permix.check(...params);
-      if (!hasPermission) {
-        throw errors.FORBIDDEN();
-      }
-      return true;
-    };
-    const result = await next({ context: { check } });
-
-    if (!permissionChecked) {
-      throw errors.FORBIDDEN();
-    }
-
-    return result;
   });
 
-export const authenticated = base.use(({ context, next, errors }) => {
+export const permitted = base.use(async ({ context, next, errors }) => {
+  let permissionChecked = false;
+  const permix = createPermix(permissions(context.user));
+  const check: Permix<Definition>['check'] = (...params) => {
+    permissionChecked = true;
+    const hasPermission = permix.check(...params);
+    if (!hasPermission) {
+      throw errors.FORBIDDEN();
+    }
+    return true;
+  };
+  const result = await next({ context: { check } });
+
+  if (!permissionChecked) {
+    throw errors.FORBIDDEN();
+  }
+
+  return result;
+});
+
+export const authenticated = permitted.use(({ context, next, errors }) => {
   if (context.user) {
     return next({ context: { user: context.user } });
   }

@@ -4,8 +4,7 @@ import { Button, Input, InputOtp } from '@heroui/react';
 import type { Route } from './+types/login.verify';
 
 import { unauthenticatedMiddleware, getSession } from '~/middleware/session';
-import { loginRequestVerify } from '~/core/auth.db';
-import { LoginRequestVerifyInput } from '~/core/auth.types';
+import { loginRequestVerify, LoginRequestVerifyInput } from '~/core/login';
 import { parseFormData } from '~/utils';
 
 export const unstable_middleware = [unauthenticatedMiddleware];
