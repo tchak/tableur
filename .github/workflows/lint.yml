@@ -28,5 +28,5 @@ jobs:
 
       - name: Run lint checks
         env:
-          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/tableur-test"
+          DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/tableur-test'
         run: just lint
