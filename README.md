@@ -1,5 +1,8 @@
 # Experimental Tabular Data Platform
 
+[![Test](https://github.com/tchak/tableur/workflows/Test/badge.svg)](https://github.com/tchak/tableur/actions/workflows/test.yml)
+[![Lint](https://github.com/tchak/tableur/workflows/Lint/badge.svg)](https://github.com/tchak/tableur/actions/workflows/lint.yml)
+
 This is a backend for an experimental tabular data platform. It provides a RESTful API for importing, managing, querying and exporting tabular data.
 
 Features:
