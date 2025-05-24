@@ -21,8 +21,19 @@ install:
 [group('dev')]
 setup: install lint test-ci db-push-dev
 
+[group('dev')]
+format: prettier prisma-format
+
+[group('dev')]
+prettier:
+  bunx prettier . --write
+
+[group('dev')]
+prisma-format:
+  bun -b prisma format
+
 [group('lint')]
-lint: prettier prisma-format typecheck eslint prisma-validate
+lint: typecheck eslint prisma-validate
 
 [group('lint')]
 eslint:
@@ -33,17 +44,9 @@ typecheck:
   react-router typegen
   bunx -b tsc
 
-[group('dev')]
-prettier:
-  bunx prettier . --write
-
 [group('lint')]
 prisma-validate:
   bun -b prisma validate
-
-[group('dev')]
-prisma-format:
-  bun -b prisma format
 
 [group('test')]
 test:
