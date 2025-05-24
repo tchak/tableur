@@ -11,8 +11,8 @@ export async function createAuthToken(userId: string, expires = '200 days') {
   });
   return createJWT(userId, {
     jti: authToken.id,
-    issuer: 'urn:solaris:server',
-    audience: 'urn:solaris:server',
+    issuer: 'urn:tableur:server',
+    audience: 'urn:tableur:server',
     expires,
   });
 }
@@ -27,8 +27,8 @@ export async function verifyAuthHeader(header: string): Promise<User | null> {
 
 export async function verifyAuthToken(token: string): Promise<User | null> {
   const payload = await verifyJWT(token, {
-    issuer: 'urn:solaris:server',
-    audience: 'urn:solaris:server',
+    issuer: 'urn:tableur:server',
+    audience: 'urn:tableur:server',
     maxTokenAge: '1 year',
   });
   if (!payload) {

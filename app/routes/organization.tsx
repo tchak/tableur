@@ -2,13 +2,15 @@ import { redirect, Form, href } from 'react-router';
 import { Button } from '@heroui/react';
 
 import type { Route } from './+types/organization';
-import { Header } from '~/components/ui/header';
 import { getUser } from '~/middleware/session';
 
 import { client } from '~/core/router';
 
-export function meta() {
-  return [{ title: 'Solaris' }, { name: 'description', content: '' }];
+export function meta({ data }: Route.MetaArgs) {
+  return [
+    { title: `Tableur - ${data.organization.name}` },
+    { name: 'description', content: '' },
+  ];
 }
 
 export const loader = async ({ params, context }: Route.LoaderArgs) => {
@@ -37,17 +39,14 @@ export const action = async ({
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="bg-background relative flex h-dvh w-full flex-col overflow-hidden">
-      <Header items={[]} />
-      <main className="container mx-auto mt-8">
-        <h1 className="mb-2">{loaderData.organization.name}</h1>
-        <Form method="post">
-          <input type="hidden" name="action" value="delete" />
-          <Button variant="flat" color="danger" type="submit">
-            Delete
-          </Button>
-        </Form>
-      </main>
+    <div className="flex flex-col gap-4 px-2 md:flex-row">
+      <h1 className="mb-2">{loaderData.organization.name}</h1>
+      <Form method="post">
+        <input type="hidden" name="action" value="delete" />
+        <Button variant="flat" color="danger" type="submit">
+          Delete
+        </Button>
+      </Form>
     </div>
   );
 }

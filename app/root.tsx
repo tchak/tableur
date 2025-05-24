@@ -16,6 +16,10 @@ import { sessionMiddleware } from '~/middleware/session';
 export const unstable_middleware = [sessionMiddleware];
 export const links: Route.LinksFunction = () => [];
 
+export function meta() {
+  return [{ title: 'Tableur' }, { name: 'description', content: '' }];
+}
+
 export function Layout({ children }: { children: ReactNode }) {
   const locale = 'en';
 

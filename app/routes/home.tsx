@@ -1,10 +1,6 @@
 import { Button } from '@heroui/react';
 import { ArrowRightIcon } from 'lucide-react';
 
-export function meta() {
-  return [{ title: 'Solaris' }, { name: 'description', content: '' }];
-}
-
 export default function RouteComponent() {
   return (
     <section className="z-20 flex flex-col items-center justify-center gap-[18px] sm:gap-6">

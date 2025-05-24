@@ -49,7 +49,7 @@ export function Header({
         />
         <NavbarBrand as={BrandLink} href="/">
           <SnowflakeIcon />
-          <p className="ml-2 font-bold text-inherit">Solaris</p>
+          <p className="ml-2 font-bold text-inherit">Tableur</p>
         </NavbarBrand>
       </NavbarContent>
 

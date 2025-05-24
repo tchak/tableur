@@ -1,5 +1,5 @@
 {
-  "name": "solaris",
+  "name": "tableur",
   "type": "module",
   "private": true,
   "devDependencies": {

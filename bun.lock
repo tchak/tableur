@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "solaris",
+      "name": "tableur",
       "dependencies": {
         "@flystorage/file-storage": "^1.1.0",
         "@flystorage/local-fs": "^1.1.0",
