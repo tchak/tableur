@@ -86,3 +86,7 @@ storage-reset:
 [group('dev')]
 loc:
   tokei -e app/generated app
+
+[group('dev')]
+secret:
+  bun -p "import { randomBytes } from 'node:crypto'; randomBytes(64).toString('hex')"
