@@ -22,10 +22,10 @@ install:
 setup: install lint test-ci db-push-dev
 
 [group('dev')]
-format: prettier prisma-format
+format: prettier-format prisma-format
 
 [group('dev')]
-prettier:
+prettier-format:
   bunx prettier . --write
 
 [group('dev')]
@@ -33,7 +33,7 @@ prisma-format:
   bun -b prisma format
 
 [group('lint')]
-lint: typecheck eslint prisma-validate
+lint: eslint prisma-validate prettier-check typecheck
 
 [group('lint')]
 eslint:
@@ -47,6 +47,10 @@ typecheck:
 [group('lint')]
 prisma-validate:
   bun -b prisma validate
+
+[group('lint')]
+prettier-check:
+  bunx prettier . --check
 
 [group('test')]
 test:
@@ -90,3 +94,7 @@ loc:
 [group('dev')]
 secret:
   bun -p "import { randomBytes } from 'node:crypto'; randomBytes(64).toString('hex')"
+
+[group('dev')]
+act:
+  act push
