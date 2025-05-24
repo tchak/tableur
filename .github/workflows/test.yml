@@ -41,5 +41,11 @@ jobs:
       - name: Install dependencies
         run: just install
 
+      - name: Install playwright
+        run: just playwright-install
+
       - name: Run tests with coverage
         run: just test-ci
+
+      - name: Run playwright tests
+        run: just playwright-test

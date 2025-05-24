@@ -60,6 +60,14 @@ test:
 test-ci: db-push-test
   bun test --coverage
 
+[group('test')]
+playwright-install:
+  bunx playwright install --with-deps
+
+[group('test')]
+playwright-test:
+  bunx playwright test
+
 [group('db'), group('dev')]
 db-push-dev reset="":
   bunx -b prisma db push {{ if reset == "reset" { "--force-reset" } else { "" } }}

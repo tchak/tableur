@@ -7,7 +7,7 @@ import macros from 'vite-plugin-babel-macros';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  server: { port: 8080 },
+  server: { port: process.env.PORT ? parseInt(process.env.PORT) : 8080 },
   plugins: [
     tailwindcss(),
     reactRouterHonoServer({ runtime: 'bun' }),
