@@ -66,7 +66,7 @@ playwright-install:
 
 [group('test')]
 playwright-test:
-  bunx playwright test
+  bun --env-file=.env.test playwright test
 
 [group('db'), group('dev')]
 db-push-dev reset="":

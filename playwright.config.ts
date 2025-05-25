@@ -6,7 +6,6 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
   use: {
     baseURL: 'http://localhost:8282',
     trace: 'on-first-retry',
@@ -21,13 +20,16 @@ export default defineConfig({
       use: { ...devices['Desktop Firefox'] },
     },
     {
-      name: 'webkit',
+      name: 'safari',
       use: { ...devices['Desktop Safari'] },
     },
+    {
+      name: 'edge',
+      use: { ...devices['Desktop Edge'] },
+    },
   ],
-
   webServer: {
-    command: 'bun -b --env-file=.env.test vite',
+    command: 'bun -b --env-file=.env.test vite -m test',
     url: 'http://localhost:8282',
     reuseExistingServer: !process.env.CI,
   },
