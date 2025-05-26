@@ -9,6 +9,7 @@ import {
 } from '@heroui/react';
 import { useFetcher, href } from 'react-router';
 import { EditIcon } from 'lucide-react';
+import { parseWithValibot } from '@conform-to/valibot';
 
 import type { Route } from './+types/account';
 import { getUser, getSession } from '~/middleware/session';
@@ -17,7 +18,6 @@ import {
   OrganizationCreateInput,
   OrganizationParams,
 } from '~/core/organization.contract';
-import { parseFormData } from '~/utils';
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const user = getUser(context);
@@ -34,7 +34,9 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   const action = formData.get('action');
   switch (action) {
     case 'create': {
-      const submission = parseFormData(OrganizationCreateInput, formData);
+      const submission = parseWithValibot(formData, {
+        schema: OrganizationCreateInput,
+      });
       if (submission.status != 'success') {
         return submission.reply();
       }
@@ -44,7 +46,9 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       break;
     }
     case 'select': {
-      const submission = parseFormData(OrganizationParams, formData);
+      const submission = parseWithValibot(formData, {
+        schema: OrganizationParams,
+      });
       if (submission.status == 'success') {
         const session = getSession(context);
         session.set('organizationId', submission.value.organizationId);

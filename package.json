@@ -31,6 +31,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@conform-to/react": "^1.6.0",
+    "@conform-to/valibot": "^1.6.0",
     "@flystorage/file-storage": "^1.1.0",
     "@flystorage/local-fs": "^1.1.0",
     "@hapi/iron": "^7.0.1",

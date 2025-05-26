@@ -61,11 +61,10 @@ export const sessionStorage = createSessionStorage<Data, FlashData>({
       { data, userId: data.userId, expiresAt: expires },
       R.isNot(R.isDefined),
     );
-    await prisma.session.upsert({
+    await prisma.session.updateMany({
       where: { id },
-      update: sessionData,
-      create: { id, ...sessionData },
-      select: { id: true },
+      limit: 1,
+      data: sessionData,
     });
   },
   async deleteData(id) {
