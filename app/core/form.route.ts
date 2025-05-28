@@ -4,14 +4,13 @@ import * as v from 'valibot';
 
 import {
   FormCreateInput,
-  FormGetJSON,
-  FormListJSON,
   FormParams,
   FormUpdateInput,
-} from './form.types';
+  openapi,
+} from './form.contract';
 import { describeRoute } from './openapi';
 import { client } from './router';
-import { TableParams } from './table.types';
+import { TableParams } from './table.contract';
 
 const forms = new Hono();
 const form = new Hono();
@@ -21,7 +20,7 @@ forms
     '/',
     describeRoute({
       description: 'List forms',
-      output: FormListJSON,
+      output: openapi.list,
     }),
     validator('param', TableParams),
     async (c) => {
@@ -34,6 +33,10 @@ forms
   )
   .post(
     '/',
+    describeRoute({
+      description: 'Create form',
+      output: openapi.create,
+    }),
     validator('param', TableParams),
     validator('json', v.omit(FormCreateInput, ['tableId'])),
     async (c) => {
@@ -53,12 +56,12 @@ form
     '/',
     describeRoute({
       description: 'Find form',
-      output: FormGetJSON,
+      output: openapi.find,
     }),
     validator('param', FormParams),
     async (c) => {
       const params = c.req.valid('param');
-      const data = await client.form.get(params, {
+      const data = await client.form.find(params, {
         context: { request: c.req.raw },
       });
       return c.json({ data });
@@ -80,7 +83,7 @@ form
   )
   .delete('/', validator('param', FormParams), async (c) => {
     const params = c.req.valid('param');
-    await client.form.delete(params, { context: { request: c.req.raw } });
+    await client.form.destroy(params, { context: { request: c.req.raw } });
     return c.body(null, { status: 204 });
   });
 

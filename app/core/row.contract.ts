@@ -1,10 +1,10 @@
 import { oc } from '@orpc/contract';
 import * as v from 'valibot';
 
-import { Data, ID, ISOTimestamp, NewData, UpdateData } from './types';
+import { Data, ID, ISOTimestamp, NewData, UpdateData } from './shared.contract';
 
-// import { SubmissionJSON } from './submission.types';
-// import { TableGetJSON } from './table.types';
+import { Submission } from './submission.contract';
+import { FindTable } from './table.contract';
 
 export const TableParams = v.object({ tableId: ID });
 export const RowParams = v.object({ rowId: ID });
@@ -27,8 +27,8 @@ const Row = v.object({
 
 const FindRow = v.object({
   ...Row.entries,
-  //table: TableGetJSON.entries.data,
-  //submission: v.nullable(SubmissionJSON),
+  table: FindTable,
+  submission: v.nullable(Submission),
 });
 
 const create = oc.input(RowCreateInput).output(Row);

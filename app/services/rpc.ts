@@ -1,6 +1,5 @@
 import { onError, ORPCError, os } from '@orpc/server';
-import type { Permix } from 'permix';
-import { createPermix } from 'permix';
+import { createPermix, type Permix } from 'permix';
 import { Prisma } from '~/generated/prisma';
 
 import { permissions, type Definition, type User } from './auth';
@@ -38,66 +37,9 @@ function handleError(error: Error) {
   }
 }
 
-export const base = os
-  .$context<Context>()
-  .errors({
-    UNAUTHORIZED: {},
-    NOT_FOUND: {},
-    INTERNAL_SERVER_ERROR: {},
-    TIMEOUT: {},
-    FORBIDDEN: {},
-  })
-  .use(onError(handleError))
-  .use(async ({ context, next, errors }) => {
-    if (context.user) {
-      return next();
-    }
-    const header = context.request?.headers?.get('authorization');
+const base = os.$context<Context>().errors({ UNAUTHORIZED: {}, FORBIDDEN: {} });
 
-    if (header) {
-      const user = await verifyAuthHeader(header);
-      if (user) {
-        return next({ context: { user } });
-      } else {
-        throw errors.UNAUTHORIZED();
-      }
-    }
-
-    return next({ context: { user: null } });
-  });
-
-export const permitted = base.use(async ({ context, next, errors }) => {
-  let permissionChecked = false;
-  const permix = createPermix(permissions(context.user ?? null));
-  const check: Permix<Definition>['check'] = (...params) => {
-    permissionChecked = true;
-    const hasPermission = permix.check(...params);
-    if (!hasPermission) {
-      throw errors.FORBIDDEN();
-    }
-    return true;
-  };
-  const result = await next({ context: { check } });
-
-  if (!permissionChecked) {
-    throw errors.FORBIDDEN();
-  }
-
-  return result;
-});
-
-export const authenticated = permitted.use(({ context, next, errors }) => {
-  if (context.user) {
-    return next({ context: { user: context.user } });
-  }
-  throw errors.UNAUTHORIZED();
-});
-
-const _base = os
-  .$context<Context>()
-  .errors({ UNAUTHORIZED: {}, FORBIDDEN: {} });
-
-const baseMiddleware = _base
+const baseMiddleware = base
   .middleware(async ({ context, next, errors }) => {
     if (context.user) {
       return next();
@@ -118,7 +60,7 @@ const baseMiddleware = _base
   .concat(onError(handleError));
 
 export const permittedMiddleware = baseMiddleware.concat(
-  _base.middleware(async ({ context, next, errors }) => {
+  base.middleware(async ({ context, next, errors }) => {
     let permissionChecked = false;
     const permix = createPermix(permissions(context.user ?? null));
     const check: Permix<Definition>['check'] = (...params) => {
@@ -140,7 +82,7 @@ export const permittedMiddleware = baseMiddleware.concat(
 );
 
 export const authenticatedMiddleware = permittedMiddleware.concat(
-  _base.middleware(({ context, next, errors }) => {
+  base.middleware(({ context, next, errors }) => {
     if (context.user) {
       return next({ context: { user: context.user } });
     }

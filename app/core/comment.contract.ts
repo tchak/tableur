@@ -2,7 +2,7 @@ import { oc } from '@orpc/contract';
 import * as v from 'valibot';
 
 import { RowParams } from './row.contract';
-import { ID, ISOTimestamp } from './types';
+import { ID, ISOTimestamp } from './shared.contract';
 
 export { RowParams };
 export const CommentParams = v.object({ commentId: ID });

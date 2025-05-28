@@ -4,7 +4,7 @@ import * as v from 'valibot';
 import { app } from '~/server/app';
 import { prisma } from '~/services/db';
 import { client } from './router';
-import { SubmissionGetJSON, SubmissionListJSON } from './submission.types';
+import { openapi } from './submission.contract';
 import { createTestUser } from './user.test';
 
 describe('api/v1/submissions', () => {
@@ -45,7 +45,7 @@ describe('api/v1/submissions', () => {
     const response = await app.request(`/api/v1/submissions`, { headers });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: submissions } = v.parse(SubmissionListJSON, data);
+    const { data: submissions } = v.parse(openapi.list, data);
     expect(submissions.length).toBe(1);
   });
 
@@ -55,7 +55,7 @@ describe('api/v1/submissions', () => {
     });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: submission } = v.parse(SubmissionGetJSON, data);
+    const { data: submission } = v.parse(openapi.find, data);
     expect(submission.id).toEqual(submissionId);
   });
 
@@ -66,7 +66,7 @@ describe('api/v1/submissions', () => {
     });
     expect(response.status).toBe(201);
     const data = await response.json();
-    const { data: submission } = v.parse(SubmissionGetJSON, data);
+    const { data: submission } = v.parse(openapi.start, data);
     expect(submission.number).toEqual(2);
     expect(submission.state).toEqual('draft');
     expect(submission.submittedAt).toBeNull();
@@ -75,7 +75,7 @@ describe('api/v1/submissions', () => {
       const response = await app.request(`/api/v1/submissions`, { headers });
       expect(response.status).toBe(200);
       const data = await response.json();
-      const { data: submission } = v.parse(SubmissionListJSON, data);
+      const { data: submission } = v.parse(openapi.list, data);
       expect(submission.length).toBe(2);
     }
   });
@@ -87,7 +87,7 @@ describe('api/v1/submissions', () => {
     });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: submission } = v.parse(SubmissionGetJSON, data);
+    const { data: submission } = v.parse(openapi.submit, data);
     expect(submission.number).toEqual(1);
     expect(submission.state).toEqual('submitted');
     expect(submission.submittedAt).not.toBeNull();

@@ -4,7 +4,7 @@ import * as v from 'valibot';
 import { app } from '~/server/app';
 import { prisma } from '~/services/db';
 import { client } from './router';
-import { _TableJSON, TableGetJSON, TableListJSON } from './table.types';
+import { openapi } from './table.contract';
 import { createTestUser } from './user.test';
 
 describe('api/v1/tables', () => {
@@ -37,7 +37,7 @@ describe('api/v1/tables', () => {
     );
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: tables } = v.parse(TableListJSON, data);
+    const { data: tables } = v.parse(openapi.list, data);
     expect(tables.length).toBe(1);
   });
 
@@ -47,7 +47,7 @@ describe('api/v1/tables', () => {
     });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: table } = v.parse(TableGetJSON, data);
+    const { data: table } = v.parse(openapi.find, data);
     expect(table.id).toEqual(tableId);
     expect(table.columns.length).toBe(1);
     const column = table.columns.at(0);
@@ -68,7 +68,7 @@ describe('api/v1/tables', () => {
     );
     expect(response.status).toBe(201);
     const data = await response.json();
-    const { data: table } = v.parse(_TableJSON, data);
+    const { data: table } = v.parse(openapi.create, data);
     expect(table.name).toEqual('Hello World');
     expect(table.number).toEqual(2);
 
@@ -79,7 +79,7 @@ describe('api/v1/tables', () => {
       );
       expect(response.status).toBe(200);
       const data = await response.json();
-      const { data: tables } = v.parse(TableListJSON, data);
+      const { data: tables } = v.parse(openapi.list, data);
       expect(tables.length).toBe(2);
       expect(tables.map(({ name }) => name)).toStrictEqual([
         'Test Table',
@@ -122,7 +122,7 @@ describe('api/v1/tables', () => {
     });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: table } = v.parse(_TableJSON, data);
+    const { data: table } = v.parse(openapi.clone, data);
     expect(table.id).not.toEqual(tableId);
     expect(table.number).toEqual(2);
     const clonedTableId = table.id;
@@ -133,7 +133,7 @@ describe('api/v1/tables', () => {
       });
       expect(response.status).toBe(200);
       const data = await response.json();
-      const { data: table } = v.parse(TableGetJSON, data);
+      const { data: table } = v.parse(openapi.find, data);
       expect(table.columns.length).toBe(1);
       const column = table.columns.at(0);
       expect(column?.name).toEqual('Test Column');

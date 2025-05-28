@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract';
 import * as v from 'valibot';
 
-import { ID, ISOTimestamp, Name } from './types';
+import { ID, ISOTimestamp, Name } from './shared.contract';
 
 export const OrganizationParams = v.object({ organizationId: ID });
 export const OrganizationCreateInput = v.object({ name: Name });

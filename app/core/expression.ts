@@ -1,7 +1,7 @@
 import { Temporal } from 'temporal-polyfill';
 import * as v from 'valibot';
 
-import { ID, TypedValue, type Data } from './types';
+import { ID, TypedValue, type Data } from './shared.contract';
 
 const Operator = v.picklist(['eq', 'ne', 'lt', 'gt', 'lte', 'gte']);
 

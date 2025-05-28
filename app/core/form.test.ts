@@ -3,7 +3,7 @@ import * as v from 'valibot';
 
 import { app } from '~/server/app';
 import { prisma } from '~/services/db';
-import { FormCreateJSON, FormGetJSON, FormListJSON } from './form.types';
+import { openapi } from './form.contract';
 import { client } from './router';
 import { createTestUser } from './user.test';
 
@@ -45,7 +45,7 @@ describe('api/v1/tables/:id/forms', () => {
     });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: forms } = v.parse(FormListJSON, data);
+    const { data: forms } = v.parse(openapi.list, data);
     expect(forms.length).toBe(1);
   });
 
@@ -53,7 +53,7 @@ describe('api/v1/tables/:id/forms', () => {
     const response = await app.request(`/api/v1/forms/${formId}`, { headers });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: form } = v.parse(FormGetJSON, data);
+    const { data: form } = v.parse(openapi.find, data);
     expect(form.id).toEqual(formId);
     expect(form.pages.length).toBe(1);
     const page = form.pages.at(0);
@@ -76,7 +76,7 @@ describe('api/v1/tables/:id/forms', () => {
     });
     expect(response.status).toBe(201);
     const data = await response.json();
-    const { data: table } = v.parse(FormCreateJSON, data);
+    const { data: table } = v.parse(openapi.create, data);
     expect(table.name).toEqual('Hello World');
     expect(table.paths).toEqual(['test-form-new']);
 
@@ -86,7 +86,7 @@ describe('api/v1/tables/:id/forms', () => {
       });
       expect(response.status).toBe(200);
       const data = await response.json();
-      const { data: forms } = v.parse(FormListJSON, data);
+      const { data: forms } = v.parse(openapi.list, data);
       expect(forms.length).toBe(2);
       expect(forms.map(({ name }) => name)).toStrictEqual([
         'Test Form',

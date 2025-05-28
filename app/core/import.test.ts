@@ -3,7 +3,7 @@ import * as v from 'valibot';
 
 import { app } from '~/server/app';
 import { prisma } from '~/services/db';
-import { ImportPreviewJSON } from './import.types';
+import { openapi } from './table.contract';
 import { createTestUser } from './user.test';
 
 describe('api/v1/imports', () => {
@@ -28,10 +28,7 @@ Jane Doe,45,no,1975-06-15`;
       });
       expect(response.status).toBe(201);
       const data = await response.json();
-      const { data: preview } = v.parse(
-        v.object({ data: ImportPreviewJSON }),
-        data,
-      );
+      const { data: preview } = v.parse(openapi.importPreview, data);
       expect(preview.columns.length).toBe(4);
       expect(preview.columns).toMatchObject([
         { name: 'name', type: 'text' },

@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract';
 import * as v from 'valibot';
 
-import { Email } from './types';
+import { Email } from './shared.contract';
 
 export const LoginRequestCreateInput = v.object({ email: Email });
 export const LoginRequestVerifyInput = v.object({

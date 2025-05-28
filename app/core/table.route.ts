@@ -9,7 +9,7 @@ import {
   TableImportDataInput,
   TableParams,
   TableUpdateInput,
-} from './table.types';
+} from './table.contract';
 
 const tables = new Hono();
 const table = new Hono();
@@ -44,7 +44,14 @@ tables
 table
   .get('/', validator('param', TableParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await client.table.get(params, {
+    const data = await client.table.find(params, {
+      context: { request: c.req.raw },
+    });
+    return c.json({ data });
+  })
+  .get('/schema.json', validator('param', TableParams), async (c) => {
+    const params = c.req.valid('param');
+    const data = await client.table.find(params, {
       context: { request: c.req.raw },
     });
     return c.json({ data });
@@ -65,7 +72,7 @@ table
   )
   .delete('/', validator('param', TableParams), async (c) => {
     const params = c.req.valid('param');
-    const data = await client.table.delete(params, {
+    const data = await client.table.destroy(params, {
       context: { request: c.req.raw },
     });
     return c.json({ data });
@@ -84,7 +91,7 @@ table
     async (c) => {
       const params = c.req.valid('param');
       const input = c.req.valid('json');
-      const data = await client.import.tableData(
+      const data = await client.table.importData(
         { ...params, ...input },
         { context: { request: c.req.raw } },
       );

@@ -39,6 +39,16 @@ export const FileValue = v.object({
   checksum: v.string(),
 });
 
+export const ColumnType = v.picklist([
+  'text',
+  'number',
+  'boolean',
+  'date',
+  'datetime',
+  'file',
+  'choice',
+  'choiceList',
+]);
 export const TextType = v.literal('text');
 export const NumberType = v.literal('number');
 export const BooleanType = v.literal('boolean');

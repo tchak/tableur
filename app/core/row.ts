@@ -38,9 +38,9 @@ const create = os.create.use(withTable).handler(({ context, input }) => {
   });
 });
 
-const find = os.find.use(withRow).handler(({ context, input }) => {
+const find = os.find.use(withRow).handler(async ({ context, input }) => {
   context.check('row', 'read', context.row);
-  return prisma.row.findUniqueOrThrow({
+  const { submission, ...row } = await prisma.row.findUniqueOrThrow({
     where: { id: input.rowId, deletedAt: null },
     select: {
       id: true,
@@ -52,7 +52,6 @@ const find = os.find.use(withRow).handler(({ context, input }) => {
         select: {
           id: true,
           number: true,
-          state: true,
           submittedAt: true,
           createdAt: true,
           updatedAt: true,
@@ -88,6 +87,14 @@ const find = os.find.use(withRow).handler(({ context, input }) => {
       },
     },
   });
+  const submittedAt = submission?.submittedAt;
+  if (submittedAt) {
+    return {
+      ...row,
+      submission: { ...submission, submittedAt, state: 'submitted' },
+    };
+  }
+  return { ...row, submittedAt: null, submission: null };
 });
 
 const list = os.list.use(withTable).handler(({ context, input }) => {

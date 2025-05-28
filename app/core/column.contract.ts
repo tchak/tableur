@@ -12,7 +12,13 @@ import {
   Name,
   NumberType,
   TextType,
-} from './types';
+} from './shared.contract';
+
+export const ImportColumn = v.object({
+  type: v.picklist(['text', 'number', 'boolean', 'date', 'datetime']),
+  name: Name,
+});
+export type ImportColumn = v.InferOutput<typeof ImportColumn>;
 
 const ChoiceOptionInput = v.object({
   name: Name,
@@ -55,51 +61,51 @@ export const ColumnCreateInput = v.variant('type', [
   }),
 ]);
 
-const ChoiceOptionJSON = v.object({
+const ChoiceOption = v.object({
   id: ID,
   name: v.string(),
 });
 
-const ColumnJSONFragment = v.object({
+const ColumnFragment = v.object({
   id: ID,
   name: v.string(),
   createdAt: ISOTimestamp,
   updatedAt: ISOTimestamp,
 });
 
-export const ColumnJSON = v.variant('type', [
+export const Column = v.variant('type', [
   v.object({
     type: TextType,
-    ...ColumnJSONFragment.entries,
+    ...ColumnFragment.entries,
   }),
   v.object({
     type: NumberType,
-    ...ColumnJSONFragment.entries,
+    ...ColumnFragment.entries,
   }),
   v.object({
     type: BooleanType,
-    ...ColumnJSONFragment.entries,
+    ...ColumnFragment.entries,
   }),
   v.object({
     type: DateType,
-    ...ColumnJSONFragment.entries,
+    ...ColumnFragment.entries,
   }),
   v.object({
     type: DateTimeType,
-    ...ColumnJSONFragment.entries,
+    ...ColumnFragment.entries,
   }),
   v.object({
     type: FileType,
-    ...ColumnJSONFragment.entries,
+    ...ColumnFragment.entries,
   }),
   v.object({
     type: ChoiceType,
-    options: v.array(ChoiceOptionJSON),
-    ...ColumnJSONFragment.entries,
+    options: v.array(ChoiceOption),
+    ...ColumnFragment.entries,
   }),
   v.object({
     type: ChoiceListType,
-    options: v.array(ChoiceOptionJSON),
-    ...ColumnJSONFragment.entries,
+    options: v.array(ChoiceOption),
+    ...ColumnFragment.entries,
   }),
 ]);

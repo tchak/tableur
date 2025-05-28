@@ -1,32 +1,9 @@
 import * as v from 'valibot';
 
-import { Data } from '~/core/types';
-import { PrismaClient } from '../generated/prisma';
-
-const ColumnType = v.picklist([
-  'text',
-  'number',
-  'boolean',
-  'date',
-  'datetime',
-  'file',
-  'choice',
-  'choiceList',
-]);
-
-const SubmissionState = v.picklist(['draft', 'submitted']);
-
-const ImportPreviewColumnType = v.picklist([
-  'text',
-  'number',
-  'boolean',
-  'date',
-  'datetime',
-]);
-const ImportPreviewColumns = v.array(
-  v.object({ type: ImportPreviewColumnType, name: v.string() }),
-);
-const ImportPreviewRows = v.array(v.array(v.nullable(v.string())));
+import { Expression } from '~/core/expression';
+import { ColumnType, Data } from '~/core/shared.contract';
+import { ImportPreview } from '~/core/table.contract';
+import { PrismaClient } from '~/generated/prisma';
 
 const timestamps = {
   createdAt: {
@@ -52,13 +29,30 @@ const prisma = new PrismaClient().$extends({
       },
     },
     form: timestamps,
+    formPage: {
+      ...timestamps,
+      condition: {
+        needs: { condition: true },
+        compute: (result) => v.parse(v.nullable(Expression), result.condition),
+      },
+    },
+    formSection: {
+      ...timestamps,
+      condition: {
+        needs: { condition: true },
+        compute: (result) => v.parse(v.nullable(Expression), result.condition),
+      },
+    },
+    formField: {
+      ...timestamps,
+      condition: {
+        needs: { condition: true },
+        compute: (result) => v.parse(v.nullable(Expression), result.condition),
+      },
+    },
     comment: timestamps,
     submission: {
       ...timestamps,
-      state: {
-        needs: { state: true },
-        compute: (result) => v.parse(SubmissionState, result.state),
-      },
       submittedAt: {
         needs: { submittedAt: true },
         compute: (result) => result.submittedAt?.toISOString() ?? null,
@@ -74,11 +68,12 @@ const prisma = new PrismaClient().$extends({
     importPreview: {
       columns: {
         needs: { columns: true },
-        compute: (result) => v.parse(ImportPreviewColumns, result.columns),
+        compute: (result) =>
+          v.parse(ImportPreview.entries.columns, result.columns),
       },
       rows: {
         needs: { rows: true },
-        compute: (result) => v.parse(ImportPreviewRows, result.rows),
+        compute: (result) => v.parse(ImportPreview.entries.rows, result.rows),
       },
     },
   },

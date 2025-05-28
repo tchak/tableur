@@ -7,7 +7,7 @@ const imports = new Hono();
 imports.post('/', async (c) => {
   const blob = await c.req.blob();
   const file = new File([blob], 'preview.csv', { type: 'text/csv' });
-  const data = await client.import.preview(
+  const data = await client.table.importPreview(
     { file },
     { context: { request: c.req.raw } },
   );

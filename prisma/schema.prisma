@@ -427,22 +427,16 @@ model FormField {
   @@map("form_fields")
 }
 
-enum SubmissionState {
-  draft
-  submitted
-}
-
 model Submission {
-  id          String          @id @default(uuid()) @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
   number      Int
-  state       SubmissionState @default(draft)
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at")
-  deletedAt   DateTime?       @map("deleted_at")
-  submittedAt DateTime?       @map("submitted_at")
-  formId      String          @map("form_id") @db.Uuid
-  rowId       String?         @unique @map("row_id") @db.Uuid
-  teamId      String?         @map("team_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  submittedAt DateTime? @map("submitted_at")
+  formId      String    @map("form_id") @db.Uuid
+  rowId       String?   @unique @map("row_id") @db.Uuid
+  teamId      String?   @map("team_id") @db.Uuid
 
   users SubmissionMembership[]
   form  Form                   @relation(fields: [formId], references: [id], onDelete: Cascade)
