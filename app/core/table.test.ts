@@ -1,3 +1,4 @@
+import type { JSONSchema7 } from '@valibot/to-json-schema';
 import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
@@ -53,6 +54,28 @@ describe('api/v1/tables', () => {
     const column = table.columns.at(0);
     expect(column?.name).toEqual('Test Column');
     expect(column?.type).toEqual('text');
+
+    {
+      const response = await app.request(
+        `/api/v1/tables/${tableId}/schema.json`,
+        {
+          headers,
+        },
+      );
+      expect(response.status).toBe(200);
+      const schema: JSONSchema7 = await response.json();
+      const id = column?.id ?? 'fail';
+      expect(schema.type).toEqual('object');
+      expect(schema.required).toEqual([id]);
+      expect(schema.properties).toStrictEqual({
+        [id]: {
+          type: 'object',
+          properties: { type: { const: 'text' }, value: { type: 'string' } },
+          required: ['type', 'value'],
+          title: 'Test Column',
+        },
+      });
+    }
   });
 
   it('should create a table', async () => {

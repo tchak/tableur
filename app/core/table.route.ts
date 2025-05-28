@@ -1,9 +1,18 @@
 import { vValidator as validator } from '@hono/valibot-validator';
+import { toJsonSchema } from '@valibot/to-json-schema';
 import { Hono } from 'hono';
 import * as v from 'valibot';
 
 import { OrganizationParams } from './organization.contract';
 import { client } from './router';
+import {
+  BooleanTypedValue,
+  DateTimeTypedValue,
+  DateTypedValue,
+  FileTypedValue,
+  NumberTypedValue,
+  TextTypedValue,
+} from './shared.contract';
 import {
   TableCreateInput,
   TableImportDataInput,
@@ -54,7 +63,48 @@ table
     const data = await client.table.find(params, {
       context: { request: c.req.raw },
     });
-    return c.json({ data });
+    const entries = data.columns.map((column) => {
+      switch (column.type) {
+        case 'text':
+          return [column.id, v.pipe(TextTypedValue, v.title(column.name))];
+        case 'number':
+          return [column.id, v.pipe(NumberTypedValue, v.title(column.name))];
+        case 'boolean':
+          return [column.id, v.pipe(BooleanTypedValue, v.title(column.name))];
+        case 'date':
+          return [column.id, v.pipe(DateTypedValue, v.title(column.name))];
+        case 'datetime':
+          return [column.id, v.pipe(DateTimeTypedValue, v.title(column.name))];
+        case 'choice':
+          return [
+            column.id,
+            v.pipe(
+              v.object({
+                type: v.literal(column.type),
+                value: v.picklist(column.options.map((option) => option.id)),
+              }),
+              v.title(column.name),
+            ),
+          ];
+        case 'choiceList':
+          return [
+            column.id,
+            v.pipe(
+              v.object({
+                type: v.literal(column.type),
+                value: v.array(
+                  v.picklist(column.options.map((option) => option.id)),
+                ),
+              }),
+              v.title(column.name),
+            ),
+          ];
+        case 'file':
+          return [column.id, v.pipe(FileTypedValue, v.title(column.name))];
+      }
+    });
+    const schema = toJsonSchema(v.object(Object.fromEntries(entries)));
+    return c.json(schema);
   })
   .patch(
     '/',
