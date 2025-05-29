@@ -5,22 +5,33 @@ import * as v from 'valibot';
 import { client } from './router';
 import {
   RowCreateInput,
+  RowListQuery,
   RowParams,
   RowUpdateInput,
-  TableParams,
 } from './row.contract';
+import { TableParams } from './table.contract';
 
 const rows = new Hono();
 const row = new Hono();
 
 rows
-  .get('/', validator('param', TableParams), async (c) => {
-    const params = c.req.valid('param');
-    const data = await client.row.list(params, {
-      context: { request: c.req.raw },
-    });
-    return c.json({ data, meta: { total: data.length } });
-  })
+  .get(
+    '/',
+    validator('param', TableParams),
+    validator('query', RowListQuery),
+    async (c) => {
+      const params = c.req.valid('param');
+      const query = c.req.valid('query');
+      const { items, next } = await client.row.list(
+        { ...params, ...query },
+        { context: { request: c.req.raw } },
+      );
+      return c.json({
+        data: items,
+        meta: { next },
+      });
+    },
+  )
   .post(
     '/',
     validator('param', TableParams),

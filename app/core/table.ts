@@ -1,10 +1,12 @@
 import { call, implement } from '@orpc/server';
+import { writeToString } from 'fast-csv';
 import * as R from 'remeda';
 
 import { withTable } from '~/services/auth';
 import { prisma } from '~/services/db';
 import { authenticatedMiddleware } from '~/services/rpc';
 import { deleteFile, readFile, writeFile } from '~/services/storage';
+import { columnValue } from './export';
 import { parseImportData, parseImportPreview } from './import';
 import { contract, ImportColumn } from './table.contract';
 
@@ -37,8 +39,8 @@ const find = os.find.use(withTable).handler(({ context, input }) => {
   return prisma.table.findUniqueOrThrow({
     where: {
       id: input.tableId,
-      organization: { deletedAt: null },
       deletedAt: null,
+      organization: { deletedAt: null },
     },
     select: {
       id: true,
@@ -54,14 +56,10 @@ const find = os.find.use(withTable).handler(({ context, input }) => {
           id: true,
           name: true,
           type: true,
-          createdAt: true,
-          updatedAt: true,
           options: {
+            where: { deletedAt: null },
             orderBy: { position: 'asc' },
-            select: {
-              id: true,
-              name: true,
-            },
+            select: { id: true, name: true },
           },
         },
       },
@@ -125,10 +123,13 @@ const update = os.update.use(withTable).handler(async ({ context, input }) => {
   await prisma.table.update({
     where: {
       id: input.tableId,
-      organization: { deletedAt: null },
       deletedAt: null,
+      organization: { deletedAt: null },
     },
-    data: { name: input.name },
+    data: R.omitBy(
+      { name: input.name, description: input.description },
+      R.isNot(R.isDefined),
+    ),
     select: { id: true },
   });
 });
@@ -141,13 +142,85 @@ const destroy = os.destroy
     await prisma.table.update({
       where: {
         id: input.tableId,
-        organization: { deletedAt: null },
         deletedAt: null,
+        organization: { deletedAt: null },
       },
       data: { deletedAt: new Date() },
       select: { id: true },
     });
   });
+
+const csv = os.csv.use(withTable).handler(async ({ context, input }) => {
+  context.check('table', 'read', context.table);
+
+  const { columns, rows } = await prisma.table.findUniqueOrThrow({
+    where: {
+      id: input.tableId,
+      deletedAt: null,
+      organization: { deletedAt: null },
+    },
+    select: {
+      columns: {
+        where: { deletedAt: null },
+        orderBy: { position: 'asc' },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          options: {
+            where: { deletedAt: null },
+            orderBy: { position: 'asc' },
+            select: { id: true, name: true },
+          },
+        },
+      },
+      rows: {
+        where: {
+          deletedAt: null,
+          OR: [
+            { submission: null },
+            { submission: { submittedAt: { not: null } } },
+          ],
+        },
+        orderBy: { number: 'asc' },
+        select: {
+          id: true,
+          number: true,
+          data: true,
+          createdAt: true,
+          updatedAt: true,
+          submission: {
+            select: {
+              submittedAt: true,
+              users: { select: { user: { select: { email: true } } } },
+            },
+          },
+        },
+      },
+    },
+  });
+  return writeToString(
+    rows.map((row) => [
+      row.id,
+      row.number,
+      row.createdAt,
+      row.submission?.submittedAt,
+      row.submission?.users.map(({ user }) => user.email).join(', '),
+      ...columns.map((column) => columnValue(row.data, column).str()),
+    ]),
+    {
+      headers: [
+        'ID',
+        'Number',
+        'Creation Date',
+        'Submission Date',
+        'Email',
+        ...columns.map((column) => column.name),
+      ],
+      alwaysWriteHeaders: true,
+    },
+  );
+});
 
 const clone = os.clone.use(withTable).handler(async ({ context, input }) => {
   context.check('table', 'write', context.table);
@@ -155,8 +228,8 @@ const clone = os.clone.use(withTable).handler(async ({ context, input }) => {
   const originalTable = await prisma.table.findUniqueOrThrow({
     where: {
       id: input.tableId,
-      organization: { deletedAt: null },
       deletedAt: null,
+      organization: { deletedAt: null },
     },
     omit: {
       id: true,
@@ -176,11 +249,12 @@ const clone = os.clone.use(withTable).handler(async ({ context, input }) => {
         deletedAt: null,
       },
     },
-    omit: {
-      tableId: true,
-      deletedAt: true,
-      createdAt: true,
-      updatedAt: true,
+    select: {
+      id: true,
+      name: true,
+      position: true,
+      type: true,
+      options: { select: { id: true, name: true, position: true } },
     },
   });
 
@@ -194,10 +268,20 @@ const clone = os.clone.use(withTable).handler(async ({ context, input }) => {
       data: {
         ...originalTable,
         number: lastTableNumber,
+        options: {
+          createMany: {
+            data: columns.flatMap(({ options, id }) =>
+              options.map((option) => ({ columnId: id, ...option })),
+            ),
+          },
+        },
         columns: {
           createMany: {
             data: columns.map((column) => ({
-              ...column,
+              id: column.id,
+              name: column.name,
+              type: column.type,
+              position: column.position,
             })),
           },
         },
@@ -335,6 +419,7 @@ const importData = os.importData
 export const router = {
   find,
   list,
+  csv,
   create,
   update,
   destroy,

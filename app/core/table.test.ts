@@ -58,9 +58,7 @@ describe('api/v1/tables', () => {
     {
       const response = await app.request(
         `/api/v1/tables/${tableId}/schema.json`,
-        {
-          headers,
-        },
+        { headers },
       );
       expect(response.status).toBe(200);
       const schema: JSONSchema7 = await response.json();
@@ -75,6 +73,16 @@ describe('api/v1/tables', () => {
           title: 'Test Column',
         },
       });
+    }
+    {
+      const response = await app.request(`/api/v1/tables/${tableId}/data.csv`, {
+        headers,
+      });
+      expect(response.status).toBe(200);
+      const csv = await response.text();
+      expect(csv).toEqual(
+        'ID,Number,Creation Date,Submission Date,Email,Test Column',
+      );
     }
   });
 

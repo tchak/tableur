@@ -51,11 +51,11 @@ describe('api/v1/rows', () => {
     const data = await response.json();
     const { data: row } = v.parse(openapi.find, data);
     expect(row.id).toEqual(rowId);
-    // expect(row.table.id).toEqual(tableId);
-    // expect(row.table.columns.length).toBe(1);
-    // const column = row.table.columns.at(0);
-    // expect(column?.name).toEqual('Test Column');
-    // expect(column?.type).toEqual('text');
+    expect(row.table.id).toEqual(tableId);
+    expect(row.table.columns.length).toBe(1);
+    const column = row.table.columns.at(0);
+    expect(column?.name).toEqual('Test Column');
+    expect(column?.type).toEqual('text');
   });
 
   it('should create a row', async () => {

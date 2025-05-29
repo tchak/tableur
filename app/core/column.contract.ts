@@ -8,7 +8,6 @@ import {
   DateType,
   FileType,
   ID,
-  ISOTimestamp,
   Name,
   NumberType,
   TextType,
@@ -69,8 +68,6 @@ const ChoiceOption = v.object({
 const ColumnFragment = v.object({
   id: ID,
   name: v.string(),
-  createdAt: ISOTimestamp,
-  updatedAt: ISOTimestamp,
 });
 
 export const Column = v.variant('type', [
@@ -109,3 +106,4 @@ export const Column = v.variant('type', [
     ...ColumnFragment.entries,
   }),
 ]);
+export type Column = v.InferOutput<typeof Column>;

@@ -7,35 +7,36 @@ import { contract } from './row.contract';
 
 const os = implement(contract).use(authenticatedMiddleware);
 
-const create = os.create.use(withTable).handler(({ context, input }) => {
-  context.check('table', 'createRow', context.table);
-  return prisma.$transaction(async (tx) => {
-    const { lastRowNumber } = await tx.table.update({
-      where: { id: input.tableId },
-      data: { lastRowNumber: { increment: 1 } },
-      select: { lastRowNumber: true },
-    });
-    return prisma.row.create({
-      data: {
-        number: lastRowNumber,
-        table: {
-          connect: {
-            id: input.tableId,
-            deletedAt: null,
-            organization: { deletedAt: null },
+const list = os.list.use(withTable).handler(async ({ context, input }) => {
+  context.check('table', 'read', context.table);
+  const rows = await prisma.row.findMany({
+    where: {
+      deletedAt: null,
+      table: {
+        id: input.tableId,
+        deletedAt: null,
+        organization: { deletedAt: null },
+      },
+    },
+    orderBy: { number: input.order },
+    take: input.take + 1,
+    ...(input.cursor
+      ? {
+          cursor: {
+            tableId_number: { tableId: input.tableId, number: input.cursor },
           },
-        },
-        data: input.data || {},
-      },
-      select: {
-        id: true,
-        number: true,
-        data: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+        }
+      : undefined),
+    select: {
+      id: true,
+      number: true,
+      data: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
+  const next = (rows.length > input.take ? rows.pop() : undefined)?.number;
+  return { items: rows, next: next ? `${next}` : undefined };
 });
 
 const find = os.find.use(withRow).handler(async ({ context, input }) => {
@@ -97,35 +98,34 @@ const find = os.find.use(withRow).handler(async ({ context, input }) => {
   return { ...row, submittedAt: null, submission: null };
 });
 
-const list = os.list.use(withTable).handler(({ context, input }) => {
-  context.check('table', 'read', context.table);
-  return prisma.row.findMany({
-    where: {
-      deletedAt: null,
-      table: {
-        id: input.tableId,
-        deletedAt: null,
-        organization: { deletedAt: null },
+const create = os.create.use(withTable).handler(({ context, input }) => {
+  context.check('table', 'createRow', context.table);
+  return prisma.$transaction(async (tx) => {
+    const { lastRowNumber } = await tx.table.update({
+      where: { id: input.tableId },
+      data: { lastRowNumber: { increment: 1 } },
+      select: { lastRowNumber: true },
+    });
+    return prisma.row.create({
+      data: {
+        number: lastRowNumber,
+        table: {
+          connect: {
+            id: input.tableId,
+            deletedAt: null,
+            organization: { deletedAt: null },
+          },
+        },
+        data: input.data || {},
       },
-    },
-    orderBy: { number: 'asc' },
-    take: 100,
-    select: {
-      id: true,
-      number: true,
-      data: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-});
-
-const destroy = os.destroy.use(withRow).handler(async ({ context, input }) => {
-  context.check('row', 'write', context.row);
-  await prisma.row.update({
-    where: { id: input.rowId, deletedAt: null },
-    data: { deletedAt: new Date() },
-    select: { id: true },
+      select: {
+        id: true,
+        number: true,
+        data: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   });
 });
 
@@ -138,9 +138,18 @@ const update = os.update.use(withRow).handler(async ({ context, input }) => {
   });
 });
 
+const destroy = os.destroy.use(withRow).handler(async ({ context, input }) => {
+  context.check('row', 'write', context.row);
+  await prisma.row.update({
+    where: { id: input.rowId, deletedAt: null },
+    data: { deletedAt: new Date() },
+    select: { id: true },
+  });
+});
+
 export const router = os.router({
-  find,
   list,
+  find,
   create,
   update,
   destroy,

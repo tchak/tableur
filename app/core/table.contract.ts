@@ -71,6 +71,7 @@ const list = oc
   .route({ method: 'GET' })
   .output(v.array(Table));
 const find = oc.input(TableParams).route({ method: 'GET' }).output(FindTable);
+const csv = oc.input(TableParams).route({ method: 'GET' }).output(v.string());
 const importPreview = oc.input(ImportPreviewInput).output(ImportPreview);
 const importTable = oc.input(TableImportInput).output(Table);
 const importData = oc
@@ -114,6 +115,7 @@ export const contract = {
   clone,
   list,
   find,
+  csv,
   importPreview,
   importTable,
   importData,

@@ -58,6 +58,14 @@ table
     });
     return c.json({ data });
   })
+  .get('/data.csv', validator('param', TableParams), async (c) => {
+    const params = c.req.valid('param');
+    const data = await client.table.csv(params, {
+      context: { request: c.req.raw },
+    });
+    c.header('content-type', 'text/csv');
+    return c.body(data);
+  })
   .get('/schema.json', validator('param', TableParams), async (c) => {
     const params = c.req.valid('param');
     const data = await client.table.find(params, {
