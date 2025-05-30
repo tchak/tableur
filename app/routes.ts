@@ -12,14 +12,20 @@ export default [
     route('login/verify', 'routes/login.verify.tsx'),
   ]),
   layout('routes/authenticated.tsx', [
-    route('account', 'routes/account.tsx', [
-      route('new-organization', 'routes/organization.new.tsx'),
+    route('account', 'routes/account.tsx'),
+    route('organizations', 'routes/organization.tsx', [
+      layout('routes/organization.list.tsx', [
+        index('routes/organization.index.tsx'),
+        route('new', 'routes/organization.new.tsx'),
+      ]),
+      route(':organizationId', 'routes/organization.show.tsx'),
     ]),
-    route('organizations/:organizationId', 'routes/organization.tsx'),
-    route('tables', 'routes/tables.tsx', [
-      index('routes/tables.index.tsx'),
-      route('new', 'routes/tables.new.tsx'),
-      route(':tableId', 'routes/tables.show.tsx'),
+    route('tables', 'routes/table.tsx', [
+      layout('routes/table.list.tsx', [
+        index('routes/table.index.tsx'),
+        route('new', 'routes/table.new.tsx'),
+      ]),
+      route(':tableId', 'routes/table.show.tsx'),
     ]),
   ]),
   route('logout', 'routes/logout.tsx'),

@@ -4,7 +4,7 @@ import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
 import { useForm, getFormProps } from '@conform-to/react';
 import * as v from 'valibot';
 
-import type { Route } from './+types/tables.new';
+import type { Route } from './+types/table.new';
 import { getUser } from '~/middleware/session';
 import { client } from '~/core/router';
 import { ModalForm } from '~/components/ui/modal-form';

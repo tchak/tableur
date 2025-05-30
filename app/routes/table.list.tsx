@@ -1,8 +1,8 @@
-import { redirect } from 'react-router';
+import { redirect, Outlet } from 'react-router';
 import { Listbox, ListboxItem, Button, Link } from '@heroui/react';
 import { href } from 'react-router';
 
-import type { Route } from './+types/tables.index';
+import type { Route } from './+types/table.list';
 
 import { getUser } from '~/middleware/session';
 import { client } from '~/core/router';
@@ -20,7 +20,12 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
 };
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
-  return <TableList tables={loaderData.tables} />;
+  return (
+    <>
+      <TableList tables={loaderData.tables} />
+      <Outlet />
+    </>
+  );
 }
 
 function TableList({ tables }: Route.ComponentProps['loaderData']) {

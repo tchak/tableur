@@ -10,7 +10,7 @@ import {
 import { useFetcher, redirect } from 'react-router';
 import { type Key, useMemo } from 'react';
 
-import type { Route } from './+types/tables.show';
+import type { Route } from './+types/table.show';
 
 import { getUser } from '~/middleware/session';
 import { client } from '~/core/router';

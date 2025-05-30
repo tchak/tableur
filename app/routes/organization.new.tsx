@@ -21,7 +21,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   await client.organization.create(submission.value, {
     context: { user },
   });
-  return redirect(href('/account'));
+  return redirect(href('/organizations'));
 };
 
 export default function RouteComponent() {
@@ -29,7 +29,7 @@ export default function RouteComponent() {
     <ModalForm
       title="Create organization"
       formId="create"
-      redirectTo={href('/account')}
+      redirectTo={href('/organizations')}
     >
       <OrganizationCreate formId="create" />
     </ModalForm>
