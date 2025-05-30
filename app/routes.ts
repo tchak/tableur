@@ -12,7 +12,9 @@ export default [
     route('login/verify', 'routes/login.verify.tsx'),
   ]),
   layout('routes/authenticated.tsx', [
-    route('account', 'routes/account.tsx'),
+    route('account', 'routes/account.tsx', [
+      route('new-organization', 'routes/organization.new.tsx'),
+    ]),
     route('organizations/:organizationId', 'routes/organization.tsx'),
     route('tables', 'routes/tables.tsx', [
       index('routes/tables.index.tsx'),

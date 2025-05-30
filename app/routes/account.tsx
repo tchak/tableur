@@ -1,24 +1,19 @@
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo } from 'react';
 import {
   Listbox,
   ListboxItem,
-  Input,
   Button,
   Link,
   type Selection,
 } from '@heroui/react';
-import { useFetcher, href } from 'react-router';
+import { useFetcher, href, Outlet } from 'react-router';
 import { EditIcon } from 'lucide-react';
-import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
-import { useForm, getFormProps } from '@conform-to/react';
+import { parseWithValibot } from '@conform-to/valibot';
 
 import type { Route } from './+types/account';
 import { getUser, getSession } from '~/middleware/session';
 import { client } from '~/core/router';
-import {
-  OrganizationCreateInput,
-  OrganizationParams,
-} from '~/core/organization.contract';
+import { OrganizationParams } from '~/core/organization.contract';
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const user = getUser(context);
@@ -30,22 +25,9 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
 };
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
-  const user = getUser(context);
   const formData = await request.formData();
   const action = formData.get('action');
   switch (action) {
-    case 'create': {
-      const submission = parseWithValibot(formData, {
-        schema: OrganizationCreateInput,
-      });
-      if (submission.status != 'success') {
-        return submission.reply();
-      }
-      await client.organization.create(submission.value, {
-        context: { user },
-      });
-      break;
-    }
     case 'select': {
       const submission = parseWithValibot(formData, {
         schema: OrganizationParams,
@@ -61,10 +43,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="flex flex-col gap-4 px-2 md:flex-row">
+    <>
       <OrganizationList {...loaderData} />
-      <OrganizationCreate />
-    </div>
+      <Outlet />
+    </>
   );
 }
 
@@ -76,9 +58,16 @@ function OrganizationList({
     useCurrentOrganization(organizationId);
   return (
     <div className="flex-2/3">
-      <h2 className="mb-2" id="organization-list">
-        Organizations
-      </h2>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 id="organization-list">Organizations</h2>
+        <Button
+          variant="flat"
+          as={Link}
+          href={href('/account/new-organization')}
+        >
+          New Organization
+        </Button>
+      </div>
       <div className="border-small rounded-small border-default-200 dark:border-default-100 px-1 py-2">
         <Listbox
           disallowEmptySelection
@@ -112,53 +101,6 @@ function OrganizationList({
         </Listbox>
       </div>
     </div>
-  );
-}
-
-function OrganizationCreate() {
-  const fetcher = useFetcher();
-  const formRef = useRef<HTMLFormElement>(null);
-  const [form, fields] = useForm({
-    constraint: getValibotConstraint(OrganizationCreateInput),
-    onValidate({ formData }) {
-      return parseWithValibot(formData, { schema: OrganizationCreateInput });
-    },
-  });
-
-  useEffect(() => {
-    if (fetcher.state == 'idle') {
-      formRef.current?.reset();
-    }
-  }, [fetcher.state]);
-
-  return (
-    <fetcher.Form
-      method="post"
-      className="flex-1/3"
-      ref={formRef}
-      {...getFormProps(form)}
-    >
-      <fieldset className="flex flex-col items-end gap-2">
-        <legend className="mb-2">
-          <h2>Create new organization</h2>
-        </legend>
-        <input type="hidden" name="action" value="create" />
-        <Input
-          type="text"
-          label="Name"
-          variant="flat"
-          name={fields.name.name}
-          isRequired
-        />
-        <Button
-          type="submit"
-          isDisabled={fetcher.state === 'submitting'}
-          variant="flat"
-        >
-          Create
-        </Button>
-      </fieldset>
-    </fetcher.Form>
   );
 }
 

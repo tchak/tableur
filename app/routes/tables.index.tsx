@@ -1,5 +1,6 @@
 import { redirect } from 'react-router';
-import { Listbox, ListboxItem } from '@heroui/react';
+import { Listbox, ListboxItem, Button, Link } from '@heroui/react';
+import { href } from 'react-router';
 
 import type { Route } from './+types/tables.index';
 
@@ -24,10 +25,13 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 
 function TableList({ tables }: Route.ComponentProps['loaderData']) {
   return (
-    <div className="flex-2/3">
-      <h2 className="mb-2" id="table-list">
-        Tables
-      </h2>
+    <>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 id="table-list">Tables</h2>
+        <Button variant="flat" as={Link} href={href('/tables/new')}>
+          New Table
+        </Button>
+      </div>
       <div className="border-small rounded-small border-default-200 dark:border-default-100 px-1 py-2">
         <Listbox
           disallowEmptySelection
@@ -46,6 +50,6 @@ function TableList({ tables }: Route.ComponentProps['loaderData']) {
           )}
         </Listbox>
       </div>
-    </div>
+    </>
   );
 }

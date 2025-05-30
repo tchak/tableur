@@ -2,60 +2,46 @@ import { Input } from '@heroui/react';
 import { Form, href, redirect } from 'react-router';
 import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
 import { useForm, getFormProps } from '@conform-to/react';
-import * as v from 'valibot';
 
-import type { Route } from './+types/tables.new';
+import type { Route } from './+types/organization.new';
 import { getUser } from '~/middleware/session';
 import { client } from '~/core/router';
+import { OrganizationCreateInput } from '~/core/organization.contract';
 import { ModalForm } from '~/components/ui/modal-form';
-
-const TableCreateInput = v.object({
-  name: v.string(),
-});
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
   const user = getUser(context);
-  if (!user.currentOrganizationId) {
-    return redirect(href('/tables'));
-  }
   const formData = await request.formData();
   const submission = parseWithValibot(formData, {
-    schema: TableCreateInput,
+    schema: OrganizationCreateInput,
   });
   if (submission.status != 'success') {
     return submission.reply();
   }
-  await client.table.create(
-    {
-      organizationId: user.currentOrganizationId,
-      columns: [{ name: 'Name', type: 'text' }],
-      ...submission.value,
-    },
-    {
-      context: { user },
-    },
-  );
-  return redirect(href('/tables'));
+  await client.organization.create(submission.value, {
+    context: { user },
+  });
+  return redirect(href('/account'));
 };
 
 export default function RouteComponent() {
   return (
     <ModalForm
-      title="Create table"
+      title="Create organization"
       formId="create"
-      redirectTo={href('/tables')}
+      redirectTo={href('/account')}
     >
-      <TableCreate formId="create" />
+      <OrganizationCreate formId="create" />
     </ModalForm>
   );
 }
 
-function TableCreate({ formId }: { formId: string }) {
+function OrganizationCreate({ formId }: { formId: string }) {
   const [form, fields] = useForm({
     id: formId,
-    constraint: getValibotConstraint(TableCreateInput),
+    constraint: getValibotConstraint(OrganizationCreateInput),
     onValidate({ formData }) {
-      return parseWithValibot(formData, { schema: TableCreateInput });
+      return parseWithValibot(formData, { schema: OrganizationCreateInput });
     },
   });
   return (
@@ -64,6 +50,7 @@ function TableCreate({ formId }: { formId: string }) {
       className="flex flex-col items-end gap-2"
       {...getFormProps(form)}
     >
+      <input type="hidden" name="action" value="create" />
       <Input
         type="text"
         label="Name"
