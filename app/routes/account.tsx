@@ -9,7 +9,8 @@ import {
 } from '@heroui/react';
 import { useFetcher, href } from 'react-router';
 import { EditIcon } from 'lucide-react';
-import { parseWithValibot } from '@conform-to/valibot';
+import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
+import { useForm, getFormProps } from '@conform-to/react';
 
 import type { Route } from './+types/account';
 import { getUser, getSession } from '~/middleware/session';
@@ -117,6 +118,12 @@ function OrganizationList({
 function OrganizationCreate() {
   const fetcher = useFetcher();
   const formRef = useRef<HTMLFormElement>(null);
+  const [form, fields] = useForm({
+    constraint: getValibotConstraint(OrganizationCreateInput),
+    onValidate({ formData }) {
+      return parseWithValibot(formData, { schema: OrganizationCreateInput });
+    },
+  });
 
   useEffect(() => {
     if (fetcher.state == 'idle') {
@@ -125,13 +132,24 @@ function OrganizationCreate() {
   }, [fetcher.state]);
 
   return (
-    <fetcher.Form method="post" className="flex-1/3" ref={formRef}>
+    <fetcher.Form
+      method="post"
+      className="flex-1/3"
+      ref={formRef}
+      {...getFormProps(form)}
+    >
       <fieldset className="flex flex-col items-end gap-2">
         <legend className="mb-2">
           <h2>Create new organization</h2>
         </legend>
         <input type="hidden" name="action" value="create" />
-        <Input type="text" name="name" label="Name" variant="flat" />
+        <Input
+          type="text"
+          label="Name"
+          variant="flat"
+          name={fields.name.name}
+          isRequired
+        />
         <Button
           type="submit"
           isDisabled={fetcher.state === 'submitting'}

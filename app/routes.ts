@@ -14,6 +14,11 @@ export default [
   layout('routes/authenticated.tsx', [
     route('account', 'routes/account.tsx'),
     route('organizations/:organizationId', 'routes/organization.tsx'),
+    route('tables', 'routes/tables.tsx', [
+      index('routes/tables.index.tsx'),
+      route('new', 'routes/tables.new.tsx'),
+      route(':tableId', 'routes/tables.show.tsx'),
+    ]),
   ]),
   route('logout', 'routes/logout.tsx'),
   route('rpc', 'routes/rpc.ts'),

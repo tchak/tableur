@@ -1,4 +1,5 @@
 import {
+  createCookieSessionStorage,
   createSessionStorage,
   type FlashSessionData,
   type Session as RRSession,
@@ -21,7 +22,19 @@ interface FlashData {
 
 export type Session = RRSession<Data, FlashData>;
 
-export const sessionStorage = createSessionStorage<Data, FlashData>({
+export const sessionStorage = createCookieSessionStorage<Data, FlashData>({
+  cookie: {
+    name: '__session',
+    httpOnly: true,
+    maxAge: maxAge('1 month'),
+    path: '/',
+    sameSite: 'lax',
+    secrets: [env.SESSION_SECRET_KEY],
+    secure: env.NODE_ENV == 'production',
+  },
+});
+
+export const prismaSessionStorage = createSessionStorage<Data, FlashData>({
   cookie: {
     name: '__session',
     httpOnly: true,

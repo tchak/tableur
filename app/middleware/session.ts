@@ -31,10 +31,12 @@ export const sessionMiddleware: unstable_MiddlewareFunction<Response> = async (
 
   const response = await next();
 
-  response.headers.set(
-    'Set-Cookie',
-    await sessionStorage.commitSession(session),
-  );
+  if (!response.headers.has('set-cookie')) {
+    response.headers.set(
+      'set-cookie',
+      await sessionStorage.commitSession(session),
+    );
+  }
 
   return response;
 };

@@ -54,7 +54,11 @@ export default function RouteComponent({
           </legend>
 
           {loaderData.email ? (
-            <input type="hidden" value={loaderData.email} />
+            <input
+              type="hidden"
+              value={loaderData.email}
+              name={fields.email.name}
+            />
           ) : (
             <Input
               isRequired
