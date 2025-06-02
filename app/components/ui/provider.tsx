@@ -15,8 +15,6 @@ export function UIProvider({
       locale={locale}
       navigate={navigate}
       useHref={useHref}
-      disableAnimation
-      disableRipple
       reducedMotion="user"
     >
       <ToastProvider disableAnimation />
