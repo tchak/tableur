@@ -8,12 +8,10 @@ import {
 } from '@heroui/react';
 import { useFetcher, href, Outlet } from 'react-router';
 import { EditIcon } from 'lucide-react';
-import { parseWithValibot } from '@conform-to/valibot';
 
 import type { Route } from './+types/organization.list';
-import { getUser, getSession } from '~/middleware/session';
+import { getUser } from '~/middleware/session';
 import { client } from '~/core/router';
-import { OrganizationParams } from '~/core/organization.contract';
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const user = getUser(context);
@@ -22,15 +20,6 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
     { context: { user } },
   );
   return { organizations, organizationId: user.currentOrganizationId };
-};
-
-export const action = async ({ request, context }: Route.ActionArgs) => {
-  const formData = await request.formData();
-  const submission = parseWithValibot(formData, { schema: OrganizationParams });
-  if (submission.status == 'success') {
-    const session = getSession(context);
-    session.set('organizationId', submission.value.organizationId);
-  }
 };
 
 export default function RouteComponent({ loaderData }: Route.ComponentProps) {

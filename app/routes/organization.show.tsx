@@ -3,12 +3,21 @@ import { Button } from '@heroui/react';
 
 import type { Route } from './+types/organization.show';
 import { getUser } from '~/middleware/session';
-
 import { client } from '~/core/router';
+import { breadcrumb } from '~/components/ui/breadcrumbs';
+
+export const handle = {
+  ...breadcrumb<Route.ComponentProps['loaderData']>((data) => ({
+    title: data.organization.name,
+    path: href('/organizations/:organizationId', {
+      organizationId: data.organization.id,
+    }),
+  })),
+};
 
 export function meta({ data }: Route.MetaArgs) {
   return [
-    { title: `Tableur - ${data.organization.name}` },
+    { title: `Tableur - ${data?.organization.name}` },
     { name: 'description', content: '' },
   ];
 }
@@ -32,7 +41,7 @@ export const action = async ({
   switch (action) {
     case 'delete': {
       await client.organization.destroy(params, { context: { user } });
-      return redirect(href('/account'));
+      return redirect(href('/organizations'));
     }
   }
 };

@@ -7,13 +7,27 @@ import {
   TableRow,
   TableCell,
 } from '@heroui/react';
-import { useFetcher, redirect } from 'react-router';
+import { useFetcher, redirect, href } from 'react-router';
 import { type Key, useMemo } from 'react';
 
 import type { Route } from './+types/table.show';
-
 import { getUser } from '~/middleware/session';
 import { client } from '~/core/router';
+import { breadcrumb } from '~/components/ui/breadcrumbs';
+
+export const handle = {
+  ...breadcrumb<Route.ComponentProps['loaderData']>((data) => ({
+    title: data.table.name,
+    path: href('/tables/:tableId', { tableId: data.table.id }),
+  })),
+};
+
+export function meta({ data }: Route.MetaArgs) {
+  return [
+    { title: `Tableur - ${data?.table.name}` },
+    { name: 'description', content: data?.table.description },
+  ];
+}
 
 export const loader = async ({ context, params }: Route.LoaderArgs) => {
   const user = getUser(context);

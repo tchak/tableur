@@ -14,6 +14,8 @@ import { useState, useMemo } from 'react';
 import { useLocation } from 'react-router';
 import { SnowflakeIcon } from 'lucide-react';
 
+import { Breadcrumbs } from './breadcrumbs';
+
 export interface HeaderItem {
   label: string;
   href: string;
@@ -41,7 +43,12 @@ export function Header({
     [items, location.pathname],
   );
   return (
-    <Navbar isBordered shouldHideOnScroll onMenuOpenChange={setIsMenuOpen}>
+    <Navbar
+      isBordered
+      shouldHideOnScroll
+      onMenuOpenChange={setIsMenuOpen}
+      maxWidth="full"
+    >
       <NavbarContent>
         <NavbarMenuToggle
           aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
@@ -51,6 +58,12 @@ export function Header({
           <SnowflakeIcon />
           <p className="ml-2 font-bold text-inherit">Tableur</p>
         </NavbarBrand>
+      </NavbarContent>
+
+      <NavbarContent>
+        <NavbarItem>
+          <Breadcrumbs />
+        </NavbarItem>
       </NavbarContent>
 
       <NavbarContent className="hidden gap-4 sm:flex" justify="center">
