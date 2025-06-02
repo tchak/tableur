@@ -3,6 +3,7 @@ import { Form, href, redirect } from 'react-router';
 import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
 import { useForm, getFormProps } from '@conform-to/react';
 import * as v from 'valibot';
+import { Trans } from '@lingui/react/macro';
 
 import type { Route } from './+types/table.new';
 import { getUser } from '~/middleware/session';
@@ -66,7 +67,7 @@ function TableCreate({ formId }: { formId: string }) {
     >
       <Input
         type="text"
-        label="Name"
+        label={<Trans>Name</Trans>}
         variant="flat"
         name={fields.name.name}
         isRequired

@@ -11,7 +11,7 @@ start:
   bun ./build/server/index.js
 
 [group('dev')]
-build:
+build: i18n
   bun -b react-router build
 
 [group('dev')]
@@ -106,3 +106,14 @@ secret:
 [group('dev')]
 act:
   act push
+
+[group('dev'), group('i18n')]
+i18n-extract:
+  bunx -b lingui extract --clean
+
+[group('dev'), group('i18n')]
+i18n-compile:
+  bunx -b lingui compile
+
+[group('dev'), group('i18n')]
+i18n: i18n-extract i18n-compile

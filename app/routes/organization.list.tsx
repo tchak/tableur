@@ -8,6 +8,7 @@ import {
 } from '@heroui/react';
 import { useFetcher, href, Outlet } from 'react-router';
 import { EditIcon } from 'lucide-react';
+import { Trans } from '@lingui/react/macro';
 
 import type { Route } from './+types/organization.list';
 import { getUser } from '~/middleware/session';
@@ -40,9 +41,11 @@ function OrganizationList({
   return (
     <div className="flex-2/3">
       <div className="mb-2 flex items-center justify-between">
-        <h2 id="organization-list">Organizations</h2>
+        <h2 id="organization-list">
+          <Trans>Organizations</Trans>
+        </h2>
         <Button variant="flat" as={Link} href={href('/organizations/new')}>
-          New Organization
+          <Trans>New Organization</Trans>
         </Button>
       </div>
       <div className="border-small rounded-small border-default-200 dark:border-default-100 px-1 py-2">

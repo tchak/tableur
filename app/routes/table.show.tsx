@@ -9,6 +9,7 @@ import {
 } from '@heroui/react';
 import { useFetcher, redirect, href } from 'react-router';
 import { type Key, useMemo } from 'react';
+import { Trans } from '@lingui/react/macro';
 
 import type { Route } from './+types/table.show';
 import { getUser } from '~/middleware/session';
@@ -67,7 +68,7 @@ function RowList({ rows, table }: Route.ComponentProps['loaderData']) {
             fetcher.submit({}, { method: 'POST' });
           }}
         >
-          Add Row
+          <Trans>Add Row</Trans>
         </Button>
       </div>
     ),

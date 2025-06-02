@@ -1,3 +1,4 @@
+import { lingui } from '@lingui/vite-plugin';
 import locales from '@react-aria/optimize-locales-plugin';
 import { reactRouter } from '@react-router/dev/vite';
 import tailwindcss from '@tailwindcss/vite';
@@ -13,6 +14,7 @@ export default defineConfig({
     reactRouterHonoServer({ runtime: 'bun' }),
     reactRouter(),
     macros(),
+    lingui(),
     tsconfigPaths(),
     { ...locales.vite({ locales: ['en', 'fr'] }), enforce: 'pre' },
   ],

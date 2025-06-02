@@ -2,6 +2,7 @@ import { Input } from '@heroui/react';
 import { Form, href, redirect } from 'react-router';
 import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
 import { useForm, getFormProps } from '@conform-to/react';
+import { Trans } from '@lingui/react/macro';
 
 import type { Route } from './+types/organization.new';
 import { getUser } from '~/middleware/session';
@@ -53,7 +54,7 @@ function OrganizationCreate({ formId }: { formId: string }) {
       <input type="hidden" name="action" value="create" />
       <Input
         type="text"
-        label="Name"
+        label={<Trans>Name</Trans>}
         variant="flat"
         name={fields.name.name}
         isRequired

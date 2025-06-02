@@ -13,6 +13,7 @@ import {
 import { useState, useMemo } from 'react';
 import { useLocation } from 'react-router';
 import { SnowflakeIcon } from 'lucide-react';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 import { Breadcrumbs } from './breadcrumbs';
 
@@ -42,6 +43,7 @@ export function Header({
       }),
     [items, location.pathname],
   );
+  const { t } = useLingui();
   return (
     <Navbar
       isBordered
@@ -51,7 +53,7 @@ export function Header({
     >
       <NavbarContent>
         <NavbarMenuToggle
-          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-label={isMenuOpen ? t`Close menu` : t`Open menu`}
           className="sm:hidden"
         />
         <NavbarBrand as={BrandLink} href="/">
@@ -88,7 +90,7 @@ export function Header({
             </Button>
           ) : (
             <Button as={Link} href="/login" variant="flat">
-              Sign In
+              <Trans>Sign In</Trans>
             </Button>
           )}
         </NavbarItem>

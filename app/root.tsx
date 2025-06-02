@@ -7,24 +7,32 @@ import {
   ScrollRestoration,
 } from 'react-router';
 import type { ReactNode } from 'react';
+import { I18nProvider } from '@lingui/react';
 
 import { UIProvider } from '~/components/ui/provider';
 import type { Route } from './+types/root';
 import './app.css';
 import { sessionMiddleware } from '~/middleware/session';
+import { getI18n } from '~/lib/i18n.server';
+import { useI18n } from '~/lib/i18n';
 
 export const unstable_middleware = [sessionMiddleware];
 export const links: Route.LinksFunction = () => [];
+
+export function loader({ request }: Route.LoaderArgs) {
+  const i18n = getI18n(request);
+  return { locale: i18n.locale, messages: i18n.messages };
+}
 
 export function meta() {
   return [{ title: 'Tableur' }, { name: 'description', content: '' }];
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  const locale = 'en';
+  const i18n = useI18n();
 
   return (
-    <html lang={locale} className="dark">
+    <html lang={i18n.locale} className="dark">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -32,7 +40,9 @@ export function Layout({ children }: { children: ReactNode }) {
         <Links />
       </head>
       <body>
-        <UIProvider locale={locale}>{children}</UIProvider>
+        <I18nProvider i18n={i18n}>
+          <UIProvider locale={i18n.locale}>{children}</UIProvider>
+        </I18nProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

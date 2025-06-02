@@ -2,6 +2,7 @@ import { redirect, Form } from 'react-router';
 import { Button, Input, InputOtp } from '@heroui/react';
 import { useForm, getFormProps } from '@conform-to/react';
 import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
+import { Trans } from '@lingui/react/macro';
 
 import type { Route } from './+types/login.verify';
 
@@ -50,7 +51,7 @@ export default function RouteComponent({
       <Form method="post" {...getFormProps(form)}>
         <fieldset className="flex flex-col gap-4">
           <legend className="pb-4 text-left text-3xl font-semibold">
-            Verify Log In
+            <Trans>Verify Sign In</Trans>
           </legend>
 
           {loaderData.email ? (
@@ -62,7 +63,7 @@ export default function RouteComponent({
           ) : (
             <Input
               isRequired
-              label="Email"
+              label={<Trans>Email</Trans>}
               variant="bordered"
               name={fields.email.name}
               isInvalid={!fields.email.valid}
@@ -84,7 +85,7 @@ export default function RouteComponent({
           />
 
           <Button className="w-full" color="primary" type="submit">
-            Verify
+            <Trans>Verify</Trans>
           </Button>
         </fieldset>
       </Form>

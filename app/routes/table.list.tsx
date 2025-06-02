@@ -1,6 +1,7 @@
 import { redirect, Outlet } from 'react-router';
 import { Listbox, ListboxItem, Button, Link } from '@heroui/react';
 import { href } from 'react-router';
+import { Trans } from '@lingui/react/macro';
 
 import type { Route } from './+types/table.list';
 
@@ -32,9 +33,11 @@ function TableList({ tables }: Route.ComponentProps['loaderData']) {
   return (
     <>
       <div className="mb-2 flex items-center justify-between">
-        <h2 id="table-list">Tables</h2>
+        <h2 id="table-list">
+          <Trans>Tables</Trans>
+        </h2>
         <Button variant="flat" as={Link} href={href('/tables/new')}>
-          New Table
+          <Trans>New Table</Trans>
         </Button>
       </div>
       <div className="border-small rounded-small border-default-200 dark:border-default-100 px-1 py-2">

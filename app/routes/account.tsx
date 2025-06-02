@@ -1,11 +1,12 @@
 import { Button, Link } from '@heroui/react';
 import { href } from 'react-router';
+import { Trans } from '@lingui/react/macro';
 
 export default function RouteComponent() {
   return (
     <>
       <Button variant="flat" as={Link} href={href('/organizations')}>
-        Organizations
+        <Trans>Organizations</Trans>
       </Button>
     </>
   );

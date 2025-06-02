@@ -8,6 +8,7 @@ import {
   ModalBody,
 } from '@heroui/react';
 import { useNavigate } from 'react-router';
+import { Trans } from '@lingui/react/macro';
 
 export function ModalForm({
   title,
@@ -38,10 +39,10 @@ export function ModalForm({
             <ModalBody>{children}</ModalBody>
             <ModalFooter>
               <Button variant="flat" onPress={onClose}>
-                Cancel
+                <Trans>Cancel</Trans>
               </Button>
               <Button color="primary" type="submit" form={formId}>
-                Create
+                <Trans>Create</Trans>
               </Button>
             </ModalFooter>
           </>

@@ -1,7 +1,8 @@
 import { redirect, Form } from 'react-router';
-import { Button, Input, Link } from '@heroui/react';
+import { Button, Input } from '@heroui/react';
 import { useForm, getFormProps } from '@conform-to/react';
 import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
+import { Trans } from '@lingui/react/macro';
 
 import type { Route } from './+types/login';
 
@@ -40,7 +41,7 @@ export default function RouteComponent({
       <Form method="post" {...getFormProps(form)}>
         <fieldset className="flex flex-col gap-4">
           <legend className="pb-4 text-left text-3xl font-semibold">
-            Log In
+            <Trans>Sign In</Trans>
           </legend>
 
           <Input
@@ -55,11 +56,6 @@ export default function RouteComponent({
           </Button>
         </fieldset>
       </Form>
-      <p className="text-small text-center">
-        <Link href="/signup" size="sm">
-          Create an account
-        </Link>
-      </p>
     </div>
   );
 }
