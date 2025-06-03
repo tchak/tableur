@@ -2,8 +2,8 @@ import type { JSONSchema7 } from '@valibot/to-json-schema';
 import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
+import { prisma } from '~/lib/db';
 import { app } from '~/server/app';
-import { prisma } from '~/services/db';
 import { client } from './router';
 import { openapi } from './table.contract';
 import { createTestUser } from './user.test';

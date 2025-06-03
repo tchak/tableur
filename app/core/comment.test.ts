@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 
+import { prisma } from '~/lib/db';
 import { app } from '~/server/app';
-import { prisma } from '~/services/db';
 import { openapi } from './comment.contract';
 import { client } from './router';
 import { createTestUser } from './user.test';

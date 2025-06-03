@@ -3,7 +3,7 @@ import { Readable } from 'stream';
 import type { ReadableStream as NodeReadableStream } from 'stream/web';
 import * as v from 'valibot';
 
-import { type BytesStream } from '~/services/storage';
+import { type BytesStream } from '~/lib/storage';
 import { Data, ISODate, ISODateTime, TypedValue } from './shared.contract';
 import { ImportColumn, ImportPreview } from './table.contract';
 

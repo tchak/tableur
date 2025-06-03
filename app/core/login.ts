@@ -1,7 +1,7 @@
 import { implement } from '@orpc/server';
 
-import { prisma } from '~/services/db';
-import { email } from '~/services/email';
+import { prisma } from '~/lib/db';
+import { email } from '~/lib/email';
 import { generateOTP, now, timeAgo } from '~/utils';
 import { contract } from './login.contract';
 

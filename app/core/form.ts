@@ -1,9 +1,9 @@
 import { implement } from '@orpc/server';
 import * as R from 'remeda';
 
-import { withForm, withTable } from '~/services/auth';
-import { prisma } from '~/services/db';
-import { authenticatedMiddleware } from '~/services/rpc';
+import { withForm, withTable } from '~/lib/auth';
+import { prisma } from '~/lib/db';
+import { authenticatedMiddleware } from '~/lib/rpc';
 import { contract } from './form.contract';
 
 const os = implement(contract).use(authenticatedMiddleware);

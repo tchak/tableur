@@ -1,6 +1,6 @@
-import { findUser } from '~/services/auth';
-import { prisma } from '~/services/db';
-import { createAuthToken } from '~/services/jwt';
+import { findUser } from '~/lib/auth';
+import { prisma } from '~/lib/db';
+import { createAuthToken } from '~/lib/jwt';
 
 export async function createTestUser() {
   const organizationId = crypto.randomUUID();

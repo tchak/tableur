@@ -4,8 +4,8 @@ import type {
 } from 'react-router';
 import { redirect, unstable_createContext } from 'react-router';
 
-import { findUser, type User } from '~/services/auth';
-import { sessionStorage, type Session } from '~/services/session';
+import { findUser, type User } from '~/lib/auth';
+import { sessionStorage, type Session } from '~/lib/session';
 
 const sessionContext = unstable_createContext<Session>();
 const maybeUserContext = unstable_createContext<User | null>();

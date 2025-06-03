@@ -1,8 +1,8 @@
 import { implement } from '@orpc/server';
 
-import { withSubmission } from '~/services/auth';
-import { prisma } from '~/services/db';
-import { authenticatedMiddleware } from '~/services/rpc';
+import { withSubmission } from '~/lib/auth';
+import { prisma } from '~/lib/db';
+import { authenticatedMiddleware } from '~/lib/rpc';
 import { contract } from './submission.contract';
 
 const os = implement(contract).use(authenticatedMiddleware);

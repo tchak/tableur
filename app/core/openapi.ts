@@ -2,7 +2,7 @@ import { describeRoute as describeHonoRoute } from 'hono-openapi';
 import { resolver } from 'hono-openapi/valibot';
 import * as v from 'valibot';
 
-import { env } from '~/services/env';
+import { env } from '~/lib/env';
 
 export function describeRoute<T>({
   description,
