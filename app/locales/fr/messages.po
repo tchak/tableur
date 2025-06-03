@@ -15,59 +15,59 @@ msgstr ""
 
 #: app/routes/table.show.tsx:71
 msgid "Add Row"
-msgstr ""
+msgstr "Ajouter une ligne"
 
 #: app/components/ui/modal-form.tsx:42
 msgid "Cancel"
-msgstr ""
+msgstr "Annuler"
 
 #: app/components/ui/header.tsx:56
 msgid "Close menu"
-msgstr ""
+msgstr "Fermer le menu"
 
 #: app/components/ui/modal-form.tsx:45
 msgid "Create"
-msgstr ""
+msgstr "Créer"
 
 #: app/routes/login.verify.tsx:66
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: app/routes/organization.new.tsx:57
 #: app/routes/table.new.tsx:70
 msgid "Name"
-msgstr ""
+msgstr "Nom"
 
 #: app/routes/organization.list.tsx:48
 msgid "New Organization"
-msgstr ""
+msgstr "Nouvelle organisation"
 
 #: app/routes/table.list.tsx:40
 msgid "New Table"
-msgstr ""
+msgstr "Nouveau tableau"
 
 #: app/components/ui/header.tsx:56
 msgid "Open menu"
-msgstr ""
+msgstr "Ouvrir le menu"
 
 #: app/routes/account.tsx:9
 #: app/routes/organization.list.tsx:45
 msgid "Organizations"
-msgstr ""
+msgstr "Organisations"
 
 #: app/routes/login.tsx:44
 #: app/components/ui/header.tsx:93
 msgid "Sign In"
-msgstr ""
+msgstr "Se connecter"
 
 #: app/routes/table.list.tsx:37
 msgid "Tables"
-msgstr ""
+msgstr "Tableaux"
 
 #: app/routes/login.verify.tsx:88
 msgid "Verify"
-msgstr ""
+msgstr "Vérifier"
 
 #: app/routes/login.verify.tsx:54
 msgid "Verify Sign In"
-msgstr ""
+msgstr "Vérifier la connexion"
