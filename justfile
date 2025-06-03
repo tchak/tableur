@@ -1,10 +1,11 @@
 export PATH := "./node_modules/.bin:" + env_var('PATH')
+export BUN_OPTIONS := "--bun"
 
 default: dev
 
 [group('dev')]
 dev:
-  bun -b vite
+  bunx vite
 
 [group('prod')]
 start:
@@ -12,7 +13,7 @@ start:
 
 [group('dev')]
 build: i18n
-  bun -b react-router build
+  bunx react-router build
 
 [group('dev')]
 install:
@@ -30,23 +31,23 @@ prettier-format:
 
 [group('dev')]
 prisma-format:
-  bun -b prisma format
+  bunx prisma format
 
 [group('lint')]
 lint: eslint prisma-validate prettier-check typecheck
 
 [group('lint')]
 eslint:
-  bunx -b eslint .
+  bunx eslint .
 
 [group('lint')]
 typecheck:
-  react-router typegen
-  bunx -b tsc
+  bunx react-router typegen
+  bunx tsc
 
 [group('lint')]
 prisma-validate:
-  bun -b prisma validate
+  bunx prisma validate
 
 [group('lint')]
 prettier-check:
@@ -62,34 +63,34 @@ test-ci: db-push-test
 
 [group('test')]
 playwright-install:
-  bunx playwright install --with-deps
+  playwright install --with-deps
 
 [group('test')]
 playwright-test:
-  bun --env-file=.env.test playwright test
+  playwright test
 
 [group('db'), group('dev')]
 db-push-dev reset="":
-  bunx -b prisma db push {{ if reset == "reset" { "--force-reset" } else { "" } }}
+  bunx prisma db push {{ if reset == "reset" { "--force-reset" } else { "" } }}
 
 [group('db'), group('test')]
 db-push-test:
-  bun -b --env-file=.env.test prisma db push --force-reset
+  bunx --env-file=.env.test prisma db push --force-reset
 
 [group('db'), group('dev')]
 db-push: db-push-dev db-push-test
 
 [group('db'), group('dev')]
 db-migrate-dev:
-  bunx -b prisma db migrate dev
+  bunx prisma db migrate dev
 
 [group('db'), group('dev')]
 db-migrate-reset:
-  bunx -b prisma db migrate reset
+  bunx prisma db migrate reset
 
 [group('db'), group('prod')]
 db-migrate:
-  bunx -b prisma db migrate deploy
+  bunx prisma db migrate deploy
 
 [group('storage'), group('dev')]
 storage-reset:
@@ -109,11 +110,11 @@ act:
 
 [group('dev'), group('i18n')]
 i18n-extract:
-  bunx -b lingui extract --clean
+  bunx lingui extract --clean
 
 [group('dev'), group('i18n')]
 i18n-compile:
-  bunx -b lingui compile
+  bunx lingui compile
 
 [group('dev'), group('i18n')]
 i18n: i18n-extract i18n-compile

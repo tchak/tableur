@@ -29,7 +29,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'bun -b --env-file=.env.test vite -m test',
+    command: 'bun --bun --env-file=.env.test vite -m test',
     url: 'http://localhost:8282',
     reuseExistingServer: !process.env.CI,
   },
