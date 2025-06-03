@@ -13,7 +13,7 @@ export interface User {
 
 export async function findUser(
   userId: string,
-  currentOrganizationId?: string,
+  sessionOrganizationId?: string,
 ): Promise<User> {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId, deletedAt: null },
@@ -21,6 +21,7 @@ export async function findUser(
       email: true,
       organizations: {
         where: { deletedAt: null },
+        orderBy: { organization: { createdAt: 'asc' } },
         select: { organizationId: true },
       },
       teams: { where: { deletedAt: null }, select: { teamId: true } },
@@ -29,14 +30,17 @@ export async function findUser(
   const organizationIds = new Set(
     user.organizations.map(({ organizationId }) => organizationId),
   );
+  const firstOrganizationId = user.organizations.at(0)?.organizationId ?? null;
+  const currentOrganizationId = sessionOrganizationId
+    ? organizationIds.has(sessionOrganizationId)
+      ? sessionOrganizationId
+      : firstOrganizationId
+    : firstOrganizationId;
+
   return {
     id: userId,
     email: user.email,
-    currentOrganizationId: currentOrganizationId
-      ? organizationIds.has(currentOrganizationId)
-        ? currentOrganizationId
-        : null
-      : null,
+    currentOrganizationId,
     organizationIds,
     teamIds: new Set(user.teams.map(({ teamId }) => teamId)),
   };
