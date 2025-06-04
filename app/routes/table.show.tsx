@@ -9,7 +9,7 @@ import {
 } from '@heroui/react';
 import { useFetcher, redirect, href } from 'react-router';
 import { type Key, useMemo } from 'react';
-import { Trans } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 import type { Route } from './+types/table.show';
 import { getUser } from '~/middleware/session';
@@ -56,6 +56,7 @@ export default function RouteComponent({ loaderData }: Route.ComponentProps) {
 }
 
 function RowList({ rows, table }: Route.ComponentProps['loaderData']) {
+  const { t } = useLingui();
   const fetcher = useFetcher();
   const topContent = useMemo(
     () => (
@@ -78,9 +79,10 @@ function RowList({ rows, table }: Route.ComponentProps['loaderData']) {
     <Table aria-label="table-row-list" topContent={topContent}>
       <TableHeader
         columns={[
-          { name: 'ID', id: 'id' } as const,
-          { name: 'Number', id: 'number' } as const,
+          { name: t`ID`, id: 'id' } as const,
+          { name: t`Number`, id: 'number' } as const,
           ...table.columns,
+          { name: t`Creation Date`, id: 'created_at' } as const,
         ]}
       >
         {(column) => <TableColumn key={column.id}>{column.name}</TableColumn>}
@@ -107,6 +109,8 @@ function getKeyValue(
       return row.id;
     case 'number':
       return row.number;
+    case 'created_at':
+      return row.createdAt;
     default:
       return String(row.data[String(key)]?.value ?? '');
   }

@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: app/routes/table.show.tsx:71
+#: app/routes/table.show.tsx:72
 msgid "Add Row"
 msgstr "Add Row"
 
@@ -29,12 +29,29 @@ msgstr "Close menu"
 msgid "Create"
 msgstr "Create"
 
+#: app/routes/organization.new.tsx:32
+msgid "Create organization"
+msgstr "Create organization"
+
+#: app/routes/table.new.tsx:46
+msgid "Create table"
+msgstr "Create table"
+
+#: app/routes/table.show.tsx:85
+msgid "Creation Date"
+msgstr "Creation Date"
+
+#: app/routes/login.tsx:49
 #: app/routes/login.verify.tsx:66
 msgid "Email"
 msgstr "Email"
 
-#: app/routes/organization.new.tsx:57
-#: app/routes/table.new.tsx:70
+#: app/routes/table.show.tsx:82
+msgid "ID"
+msgstr "ID"
+
+#: app/routes/organization.new.tsx:58
+#: app/routes/table.new.tsx:71
 msgid "Name"
 msgstr "Name"
 
@@ -46,6 +63,10 @@ msgstr "New Organization"
 msgid "New Table"
 msgstr "New Table"
 
+#: app/routes/table.show.tsx:83
+msgid "Number"
+msgstr "Number"
+
 #: app/components/ui/header.tsx:56
 msgid "Open menu"
 msgstr "Open menu"
@@ -56,6 +77,7 @@ msgid "Organizations"
 msgstr "Organizations"
 
 #: app/routes/login.tsx:44
+#: app/routes/login.tsx:55
 #: app/components/ui/header.tsx:93
 msgid "Sign In"
 msgstr "Sign In"

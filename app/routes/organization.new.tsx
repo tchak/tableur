@@ -2,7 +2,7 @@ import { Input } from '@heroui/react';
 import { Form, href, redirect } from 'react-router';
 import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
 import { useForm, getFormProps } from '@conform-to/react';
-import { Trans } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 import type { Route } from './+types/organization.new';
 import { getUser } from '~/middleware/session';
@@ -26,9 +26,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 };
 
 export default function RouteComponent() {
+  const { t } = useLingui();
   return (
     <ModalForm
-      title="Create organization"
+      title={t`Create organization`}
       formId="create"
       redirectTo={href('/organizations')}
     >

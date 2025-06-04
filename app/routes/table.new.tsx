@@ -3,7 +3,7 @@ import { Form, href, redirect } from 'react-router';
 import { parseWithValibot, getValibotConstraint } from '@conform-to/valibot';
 import { useForm, getFormProps } from '@conform-to/react';
 import * as v from 'valibot';
-import { Trans } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 import type { Route } from './+types/table.new';
 import { getUser } from '~/middleware/session';
@@ -40,9 +40,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 };
 
 export default function RouteComponent() {
+  const { t } = useLingui();
   return (
     <ModalForm
-      title="Create table"
+      title={t`Create table`}
       formId="create"
       redirectTo={href('/tables')}
     >

@@ -46,13 +46,13 @@ export default function RouteComponent({
 
           <Input
             isRequired
-            label="Email"
+            label={<Trans>Email</Trans>}
             name={fields.email.name}
             type="email"
             variant="bordered"
           />
           <Button className="w-full" color="primary" type="submit">
-            Log In
+            <Trans>Sign In</Trans>
           </Button>
         </fieldset>
       </Form>
