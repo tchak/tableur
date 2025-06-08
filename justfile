@@ -75,7 +75,7 @@ db-push-dev reset="":
 
 [group('db'), group('test')]
 db-push-test:
-  bunx --env-file=.env.test prisma db push --force-reset
+  bun --env-file=.env.test prisma db push --force-reset
 
 [group('db'), group('dev')]
 db-push: db-push-dev db-push-test
