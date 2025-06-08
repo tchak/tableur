@@ -14,8 +14,8 @@ export interface User {
 export async function findUser(
   userId: string,
   sessionOrganizationId?: string,
-): Promise<User> {
-  const user = await prisma.user.findUniqueOrThrow({
+): Promise<User | null> {
+  const user = await prisma.user.findUnique({
     where: { id: userId, deletedAt: null },
     select: {
       email: true,
@@ -27,6 +27,7 @@ export async function findUser(
       teams: { where: { deletedAt: null }, select: { teamId: true } },
     },
   });
+  if (!user) return null;
   const organizationIds = new Set(
     user.organizations.map(({ organizationId }) => organizationId),
   );
