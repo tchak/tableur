@@ -5,7 +5,7 @@ generator client {
   provider        = "prisma-client"
   output          = "../app/generated/prisma"
   runtime         = "bun"
-  previewFeatures = ["postgresqlExtensions", "strictUndefinedChecks"]
+  previewFeatures = ["strictUndefinedChecks", "driverAdapters", "relationJoins", "nativeDistinct"]
 }
 
 datasource db {
