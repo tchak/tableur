@@ -3,7 +3,7 @@ import * as v from 'valibot';
 import { Expression } from '~/core/expression';
 import { ColumnType, Data } from '~/core/shared.contract';
 import { ImportPreview } from '~/core/table.contract';
-import { PrismaClient } from '~/generated/prisma';
+import { PrismaClient } from '~/generated/prisma/client';
 
 const timestamps = {
   createdAt: {

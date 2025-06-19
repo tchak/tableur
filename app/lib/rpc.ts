@@ -1,6 +1,6 @@
 import { onError, ORPCError, os } from '@orpc/server';
 import { createPermix, type Permix } from 'permix';
-import { Prisma } from '~/generated/prisma';
+import { Prisma } from '~/generated/prisma/client';
 
 import { permissions, type Definition, type User } from './auth';
 import { verifyAuthHeader } from './jwt';
