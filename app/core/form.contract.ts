@@ -34,11 +34,20 @@ const Field = v.object({
   condition: v.nullable(Expression),
 });
 
+const FieldSet = v.object({
+  id: ID,
+  label: v.string(),
+  description: v.nullable(v.string()),
+  condition: v.nullable(Expression),
+  fields: v.array(Field),
+});
+
 const Section = v.object({
   id: ID,
   title: v.string(),
   condition: v.nullable(Expression),
   fields: v.array(Field),
+  fieldSets: v.array(FieldSet),
 });
 
 const Page = v.object({

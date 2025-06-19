@@ -43,6 +43,13 @@ const prisma = new PrismaClient().$extends({
         compute: (result) => v.parse(v.nullable(Expression), result.condition),
       },
     },
+    formFieldSet: {
+      ...timestamps,
+      condition: {
+        needs: { condition: true },
+        compute: (result) => v.parse(v.nullable(Expression), result.condition),
+      },
+    },
     formField: {
       ...timestamps,
       condition: {

@@ -122,6 +122,28 @@ const find = os.find.use(withForm).handler(async ({ context, input }) => {
               title: true,
               condition: true,
               parentId: true,
+              fieldSets: {
+                where: { deletedAt: null },
+                orderBy: { position: 'asc' },
+                select: {
+                  id: true,
+                  label: true,
+                  description: true,
+                  condition: true,
+                  fields: {
+                    where: { deletedAt: null },
+                    orderBy: { position: 'asc' },
+                    select: {
+                      id: true,
+                      column: { select: { type: true } },
+                      label: true,
+                      description: true,
+                      required: true,
+                      condition: true,
+                    },
+                  },
+                },
+              },
               fields: {
                 where: { deletedAt: null },
                 orderBy: { position: 'asc' },
