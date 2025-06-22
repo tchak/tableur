@@ -20,7 +20,7 @@ install:
   bun install
 
 [group('dev')]
-setup: install lint test-ci db-push-dev
+setup: install db-push-dev lint coverage
 
 [group('dev')]
 format: prettier-format prisma-format
@@ -58,8 +58,11 @@ test:
   bun test --watch
 
 [group('test')]
-test-ci: db-push-test
+coverage:
   bun test --coverage
+
+[group('test')]
+test-ci: db-push-test coverage
 
 [group('test')]
 playwright-install:
