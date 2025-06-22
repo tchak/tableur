@@ -136,6 +136,27 @@ export function extractTypedValue(field: SubmissionField): TypedValue | null {
   return R.pick(field, ['type', 'value']) as TypedValue;
 }
 
+export function formatValue(value: TypedValue): string {
+  switch (value.type) {
+    case 'text':
+      return value.value;
+    case 'number':
+      return value.value.toString();
+    case 'boolean':
+      return value.value ? 'Yes' : 'No';
+    case 'date':
+      return value.value;
+    case 'datetime':
+      return value.value;
+    case 'choice':
+      return value.value;
+    case 'choiceList':
+      return value.value.join(', ');
+    case 'file':
+      return '';
+  }
+}
+
 // export function castTypedValue(
 //   value: TypedValue,
 //   type: TypedValue['type'],

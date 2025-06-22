@@ -116,5 +116,8 @@ export const UpdateValue = v.variant('type', [
 export const Data = v.record(ID, TypedValue);
 export type Data = v.InferOutput<typeof Data>;
 
+export const SubData = v.record(ID, v.array(Data));
+export type SubData = v.InferOutput<typeof SubData>;
+
 export const NewData = v.record(ID, NewValue);
 export const UpdateData = v.record(ID, UpdateValue);
