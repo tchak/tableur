@@ -2,7 +2,21 @@ import { oc } from '@orpc/contract';
 import * as v from 'valibot';
 
 import { Expression } from '~/core/expression';
-import { Description, ID, ISOTimestamp, Name } from './shared.contract';
+import { ChoiceOption } from './column.contract';
+import {
+  BooleanType,
+  ChoiceListType,
+  ChoiceType,
+  DateTimeType,
+  DateType,
+  Description,
+  FileType,
+  ID,
+  ISOTimestamp,
+  Name,
+  NumberType,
+  TextType,
+} from './shared.contract';
 import { TableParams } from './table.contract';
 
 export const FormCreateInput = v.object({
@@ -26,35 +40,97 @@ export const FormUpdateInput = v.object({
 
 export const FormParams = v.object({ formId: ID });
 
-const Field = v.object({
+const FieldFragment = v.object({
   id: ID,
   label: v.string(),
   description: v.nullable(v.string()),
+  condition: v.nullable(Expression),
+});
+
+export const TextField = v.object({
+  type: TextType,
   required: v.boolean(),
-  condition: v.nullable(Expression),
+  ...FieldFragment.entries,
+});
+export const NumberField = v.object({
+  type: NumberType,
+  required: v.boolean(),
+  ...FieldFragment.entries,
+});
+export const BooleanField = v.object({
+  type: BooleanType,
+  required: v.boolean(),
+  ...FieldFragment.entries,
+});
+export const DateField = v.object({
+  type: DateType,
+  required: v.boolean(),
+  ...FieldFragment.entries,
+});
+export const DateTimeField = v.object({
+  type: DateTimeType,
+  required: v.boolean(),
+  ...FieldFragment.entries,
+});
+export const FileField = v.object({
+  type: FileType,
+  required: v.boolean(),
+  ...FieldFragment.entries,
+});
+export const ChoiceField = v.object({
+  type: ChoiceType,
+  options: v.array(ChoiceOption),
+  required: v.boolean(),
+  ...FieldFragment.entries,
+});
+export const ChoiceListField = v.object({
+  type: ChoiceListType,
+  options: v.array(ChoiceOption),
+  required: v.boolean(),
+  ...FieldFragment.entries,
 });
 
-const FieldSet = v.object({
-  id: ID,
-  label: v.string(),
-  description: v.nullable(v.string()),
-  condition: v.nullable(Expression),
-  fields: v.array(Field),
-});
+const fields = [
+  TextField,
+  NumberField,
+  BooleanField,
+  DateField,
+  DateTimeField,
+  FileField,
+  ChoiceField,
+  ChoiceListField,
+];
 
-const Section = v.object({
+export const Field = v.variant('type', [
+  ...fields,
+  // v.object({
+  //   type: FieldSetType,
+  //   fields: v.array(v.variant('type', fields)),
+  //   ...FieldFragment.entries,
+  // }),
+]);
+export type Field = v.InferOutput<typeof Field>;
+
+const SectionFragment = v.object({
   id: ID,
   title: v.string(),
   condition: v.nullable(Expression),
   fields: v.array(Field),
-  fieldSets: v.array(FieldSet),
+});
+type SectionFragment = v.InferOutput<typeof SectionFragment>;
+export type Section = SectionFragment & { sections: Section[] };
+
+const Section: v.GenericSchema<Section> = v.object({
+  ...SectionFragment.entries,
+  sections: v.lazy(() => v.array(Section)),
 });
 
-const Page = v.object({
+export const Page = v.object({
   id: ID,
   condition: v.nullable(Expression),
   sections: v.array(Section),
 });
+export type Page = v.InferOutput<typeof Page>;
 
 const Form = v.object({
   id: ID,

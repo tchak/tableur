@@ -49,7 +49,7 @@ const Table = v.object({
   updatedAt: ISOTimestamp,
 });
 
-export const FindTable = v.object({
+export const ExpandedTable = v.object({
   ...Table.entries,
   columns: v.array(Column),
 });
@@ -70,7 +70,10 @@ const list = oc
   .input(OrganizationParams)
   .route({ method: 'GET' })
   .output(v.array(Table));
-const find = oc.input(TableParams).route({ method: 'GET' }).output(FindTable);
+const find = oc
+  .input(TableParams)
+  .route({ method: 'GET' })
+  .output(ExpandedTable);
 const csv = oc.input(TableParams).route({ method: 'GET' }).output(v.string());
 const importPreview = oc.input(ImportPreviewInput).output(ImportPreview);
 const importTable = oc.input(TableImportInput).output(Table);

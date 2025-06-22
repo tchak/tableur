@@ -1,9 +1,23 @@
 import { implement } from '@orpc/server';
+import * as R from 'remeda';
 
 import { withSubmission } from '~/lib/auth';
 import { prisma } from '~/lib/db';
 import { authenticatedMiddleware } from '~/lib/rpc';
-import { contract } from './submission.contract';
+import { compute } from './expression';
+import { transformPage } from './form';
+import type {
+  Field as FormField,
+  Section as FormSection,
+} from './form.contract';
+import type { Data } from './shared.contract';
+import {
+  contract,
+  type Field,
+  type Page,
+  type Section,
+} from './submission.contract';
+import { castSubmissionField, extractTypedValue } from './value';
 
 const os = implement(contract).use(authenticatedMiddleware);
 
@@ -36,28 +50,112 @@ const list = os.list.handler(async ({ context }) => {
 
 const find = os.find.use(withSubmission).handler(async ({ context, input }) => {
   context.check('submission', 'read', context.submission);
-  const submission = await prisma.submission.findUniqueOrThrow({
-    where: {
-      id: input.submissionId,
-      deletedAt: null,
-      form: { deletedAt: null, table: { deletedAt: null } },
-    },
-    select: {
-      id: true,
-      number: true,
-      submittedAt: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const { form, row, ...submission } =
+    await prisma.submission.findUniqueOrThrow({
+      where: {
+        id: input.submissionId,
+        deletedAt: null,
+        form: { deletedAt: null, table: { deletedAt: null } },
+      },
+      select: {
+        id: true,
+        number: true,
+        submittedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        row: { select: { data: true } },
+        form: {
+          select: {
+            pages: {
+              where: { deletedAt: null },
+              orderBy: { position: 'asc' },
+              select: {
+                id: true,
+                condition: true,
+                sections: {
+                  where: { deletedAt: null },
+                  orderBy: { position: 'asc' },
+                  select: {
+                    id: true,
+                    title: true,
+                    condition: true,
+                    parentId: true,
+                    fields: {
+                      where: { deletedAt: null, fieldSetId: null },
+                      orderBy: { position: 'asc' },
+                      select: {
+                        id: true,
+                        column: {
+                          select: {
+                            type: true,
+                            deletedAt: true,
+                            options: {
+                              where: { deletedAt: null },
+                              orderBy: { position: 'asc' },
+                              select: { id: true, name: true },
+                            },
+                          },
+                        },
+                        label: true,
+                        description: true,
+                        required: true,
+                        condition: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+  const seen: Data = {};
+  function transformField(field: FormField, seen: Data): Field | null {
+    if (field.condition && !compute(field.condition, seen)) {
+      return null;
+    }
+    const typedValue = row?.data?.[field.id];
+    if (!typedValue) {
+      return { ...field, value: null };
+    }
+    return castSubmissionField(field, typedValue);
+  }
+  function transformSection(section: FormSection): Section {
+    const fields = R.pipe(
+      section.fields,
+      R.map((field) => {
+        const maybeField = transformField(field, seen);
+        if (maybeField) {
+          const value = extractTypedValue(maybeField);
+          if (value) {
+            seen[maybeField.id] = value;
+          }
+        }
+        return maybeField;
+      }),
+      R.filter(R.isNonNull),
+    );
+    return {
+      ...section,
+      fields,
+      sections: section.sections.map(transformSection),
+    };
+  }
+  const pages: Page[] = form.pages.map(transformPage).map((page) => ({
+    ...page,
+    sections: page.sections.map(transformSection),
+  }));
   if (submission.submittedAt) {
     return {
       ...submission,
+      pages,
       submittedAt: submission.submittedAt,
       state: 'submitted',
     };
   }
-  return { ...submission, submittedAt: null, state: 'draft' };
+  return { ...submission, pages, submittedAt: null, state: 'draft' };
 });
 
 const start = os.start.handler(async ({ context, input }) => {

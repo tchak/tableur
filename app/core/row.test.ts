@@ -41,8 +41,13 @@ describe('api/v1/rows', () => {
     });
     expect(response.status).toBe(200);
     const data = await response.json();
-    const { data: rows } = v.parse(openapi.list, data);
-    expect(rows.length).toBe(1);
+    const {
+      data: [row, ...rest],
+    } = v.parse(openapi.list, data);
+    expect(rest.length).toBeEmpty();
+    expect(row).toMatchObject({
+      data: {},
+    });
   });
 
   it('should return a row', async () => {

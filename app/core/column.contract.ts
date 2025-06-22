@@ -60,7 +60,7 @@ export const ColumnCreateInput = v.variant('type', [
   }),
 ]);
 
-const ChoiceOption = v.object({
+export const ChoiceOption = v.object({
   id: ID,
   name: v.string(),
 });

@@ -434,7 +434,7 @@ model FormField {
   tableId     String    @map("table_id") @db.Uuid
   formId      String    @map("form_id") @db.Uuid
   fieldSetId  String?   @map("field_set_id") @db.Uuid
-  sectionId   String?   @map("section_id") @db.Uuid
+  sectionId   String    @map("section_id") @db.Uuid
   label       String
   position    Float
   description String?
@@ -451,7 +451,7 @@ model FormField {
   table    Table         @relation(fields: [tableId], references: [id], onDelete: Cascade)
   form     Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
   column   Column        @relation(fields: [tableId, id], references: [tableId, id], onDelete: Cascade)
-  section  FormSection?  @relation(fields: [formId, sectionId], references: [formId, id], onDelete: Cascade)
+  section  FormSection   @relation(fields: [formId, sectionId], references: [formId, id], onDelete: Cascade)
   fieldSet FormFieldSet? @relation(fields: [formId, fieldSetId], references: [formId, id], onDelete: Cascade)
 
   @@id([formId, id])

@@ -4,7 +4,7 @@ import * as v from 'valibot';
 import { Data, ID, ISOTimestamp, NewData, UpdateData } from './shared.contract';
 
 import { Submission } from './submission.contract';
-import { FindTable, TableParams } from './table.contract';
+import { ExpandedTable, TableParams } from './table.contract';
 
 export const RowListQuery = v.object({
   cursor: v.optional(
@@ -19,6 +19,7 @@ export const RowListQuery = v.object({
     100,
   ),
   order: v.fallback(v.picklist(['asc', 'desc']), 'asc'),
+  columns: v.optional(v.array(ID)),
 });
 export const RowParams = v.object({ rowId: ID });
 export const RowCreateInput = v.object({
@@ -38,16 +39,16 @@ const Row = v.object({
   updatedAt: ISOTimestamp,
 });
 
-const FindRow = v.object({
+const ExpandedRow = v.object({
   ...Row.entries,
-  table: FindTable,
+  table: ExpandedTable,
   submission: v.nullable(Submission),
 });
 
 const create = oc.input(RowCreateInput).output(Row);
 const update = oc.input(RowUpdateInput).output(v.void());
 const destroy = oc.input(RowParams).output(v.void());
-const find = oc.route({ method: 'GET' }).input(RowParams).output(FindRow);
+const find = oc.route({ method: 'GET' }).input(RowParams).output(ExpandedRow);
 const list = oc
   .input(
     v.object({

@@ -1,9 +1,11 @@
 import { implement } from '@orpc/server';
+import * as R from 'remeda';
 
 import { withRow, withTable } from '~/lib/auth';
 import { prisma } from '~/lib/db';
 import { authenticatedMiddleware } from '~/lib/rpc';
 import { contract } from './row.contract';
+import { castRowData } from './value';
 
 const os = implement(contract).use(authenticatedMiddleware);
 
@@ -35,13 +37,37 @@ const list = os.list.use(withTable).handler(async ({ context, input }) => {
       updatedAt: true,
     },
   });
+  const columns = await prisma.column.findMany({
+    where: {
+      tableId: input.tableId,
+      deletedAt: null,
+      ...(input.columns ? { id: { in: input.columns } } : undefined),
+    },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      createdAt: true,
+      updatedAt: true,
+      options: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+  const items = rows.map(({ data, ...row }) => ({
+    ...row,
+    data: castRowData(data, columns),
+  }));
   const next = (rows.length > input.take ? rows.pop() : undefined)?.number;
-  return { items: rows, next: next ? `${next}` : undefined };
+  return { items, next: next ? `${next}` : undefined };
 });
 
 const find = os.find.use(withRow).handler(async ({ context, input }) => {
   context.check('row', 'read', context.row);
-  const { submission, ...row } = await prisma.row.findUniqueOrThrow({
+  const { submission, data, ...row } = await prisma.row.findUniqueOrThrow({
     where: { id: input.rowId, deletedAt: null },
     select: {
       id: true,
@@ -92,14 +118,35 @@ const find = os.find.use(withRow).handler(async ({ context, input }) => {
   if (submittedAt) {
     return {
       ...row,
+      data: castRowData(data, row.table.columns),
       submission: { ...submission, submittedAt, state: 'submitted' },
     };
   }
-  return { ...row, submittedAt: null, submission: null };
+  return {
+    ...row,
+    data: castRowData(data, row.table.columns),
+    submittedAt: null,
+    submission: null,
+  };
 });
 
-const create = os.create.use(withTable).handler(({ context, input }) => {
+const create = os.create.use(withTable).handler(async ({ context, input }) => {
   context.check('table', 'createRow', context.table);
+  const columns = await prisma.column.findMany({
+    where: { tableId: input.tableId, deletedAt: null },
+    select: {
+      id: true,
+      type: true,
+      options: {
+        where: { deletedAt: null },
+        select: { id: true },
+      },
+    },
+  });
+  const columnIds = R.indexBy(columns, (column) => column.id);
+  const data = R.pickBy(input.data ?? {}, (typedValue, key) => {
+    return columnIds[key]?.type == typedValue.type;
+  });
   return prisma.$transaction(async (tx) => {
     const { lastRowNumber } = await tx.table.update({
       where: { id: input.tableId },
@@ -116,7 +163,7 @@ const create = os.create.use(withTable).handler(({ context, input }) => {
             organization: { deletedAt: null },
           },
         },
-        data: input.data || {},
+        data,
       },
       select: {
         id: true,
@@ -131,9 +178,35 @@ const create = os.create.use(withTable).handler(({ context, input }) => {
 
 const update = os.update.use(withRow).handler(async ({ context, input }) => {
   context.check('row', 'write', context.row);
+  const {
+    table: { columns },
+  } = await prisma.row.findUniqueOrThrow({
+    where: { id: input.rowId, deletedAt: null, table: { deletedAt: null } },
+    select: {
+      table: {
+        select: {
+          columns: {
+            where: { deletedAt: null },
+            select: {
+              id: true,
+              type: true,
+              options: {
+                where: { deletedAt: null },
+                select: { id: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  const columnIds = R.indexBy(columns, (column) => column.id);
+  const data = R.pickBy(input.data, (typedValue, key) => {
+    return columnIds[key]?.type == typedValue.type;
+  });
   await prisma.row.update({
     where: { id: input.rowId, deletedAt: null },
-    data: input.data,
+    data,
     select: { id: true },
   });
 });

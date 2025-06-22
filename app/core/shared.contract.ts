@@ -35,6 +35,7 @@ export const DateTimeType = v.literal('datetime');
 export const FileType = v.literal('file');
 export const ChoiceType = v.literal('choice');
 export const ChoiceListType = v.literal('choiceList');
+export const FieldSetType = v.literal('fieldSet');
 
 export const FileValue = v.object({
   url: v.pipe(v.string(), v.url()),
@@ -43,6 +44,7 @@ export const FileValue = v.object({
   mimeType: v.string(),
   checksum: v.string(),
 });
+export type FileValue = v.InferOutput<typeof FileValue>;
 
 export const TextTypedValue = v.object({ type: TextType, value: v.string() });
 export const NumberTypedValue = v.object({ type: NumberType, value: Int });
@@ -64,6 +66,15 @@ export const FileTypedValue = v.object({
   type: FileType,
   value: v.array(FileValue),
 });
+
+export type TextTypedValue = v.InferOutput<typeof TextTypedValue>;
+export type NumberTypedValue = v.InferOutput<typeof NumberTypedValue>;
+export type BooleanTypedValue = v.InferOutput<typeof BooleanTypedValue>;
+export type ChoiceTypedValue = v.InferOutput<typeof ChoiceTypedValue>;
+export type ChoiceListTypedValue = v.InferOutput<typeof ChoiceListTypedValue>;
+export type DateTypedValue = v.InferOutput<typeof DateTypedValue>;
+export type DateTimeTypedValue = v.InferOutput<typeof DateTimeTypedValue>;
+export type FileTypedValue = v.InferOutput<typeof FileTypedValue>;
 
 export const TypedValue = v.variant('type', [
   TextTypedValue,
